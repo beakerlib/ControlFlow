@@ -1,0 +1,5 @@
+summary: Implements conditional phases.
+contact: Dalibor Pospíšil <dapospis@redhat.com>
+extra-nitrate: TC#0287558
+extra-summary: '[ConditionalPhases] Implements conditional phases (distribution/ConditionalPhases)'
+extra-task: /distribution/Library/ConditionalPhases
