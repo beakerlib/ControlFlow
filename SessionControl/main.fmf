@@ -1,0 +1,9 @@
+summary: Sessions handling library
+contact: Dalibor Pospíšil <dapospis@redhat.com>
+test: ./runtest.sh
+require:
+- /usr/bin/expect
+- /usr/bin/bash
+duration: 5m
+enabled: true
+extra-nitrate: TC#0611933
