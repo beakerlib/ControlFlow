@@ -545,6 +545,60 @@ Success!
 
 =back
 
+=head1 EXAMPLES
+
+  Simply run C<id> in a session
+
+    sesOpen
+    sesRun "id"
+    ses Close
+
+  Run commands in two sessions
+
+    sesOpen
+    sesOpen
+    sesRun --id ${sesID[1]} "id"
+    sesRun --id ${sesID[2]} "id"
+    sesRun "id"                   # run in sesID[2] as it was the last one used
+    sesClose --id ${sesID[1]}
+    sesClose --id ${sesID[2]}
+
+    sesOpen --id A
+    sesOpen --id B
+    sesRun --id A "id"
+    sesRun --id B "id"
+    sesRun "id"                   # run in B as it was the last one used
+    sesID=A                       # equal to sesID[0]=A
+    sesRun "id"                   # run in A
+    sesClose --id A
+    sesClose --id B
+
+  Run command on remote machines
+
+    sesOpen --id server
+    sesOpen --id client
+    # note we need to let ssh execution to timeout as the ssh command actually
+    # does not finish, it will stay waiting for th epassword and the remote propmt
+    sesRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
+    sesExpect "[Pp]assword"
+    sesSend "PASSWORD"$'\n'
+    sesRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
+    sesExpect "[Pp]assword"
+    sesSend "PASSWORD"$'\n'
+    # check we are on the remote
+    rlRun -s 'sesRun --id server "hostname -f"'
+    rlAssertGrep 'server.example.com' $rlRun_LOG
+    rm -f $rlRun_LOG
+    rlRun -s 'sesRun --id client "hostname -f"'
+    rlAssertGrep 'client.example.com' $rlRun_LOG
+    rm -f $rlRun_LOG
+    # optionally exit from ssh connections
+    sesRun --id server --timeout 1 "exit"
+    sesRun --id client --timeout 1 "exit"
+    sesClose --id server
+    sesClose --id client
+
+
 =head1 FILES
 
 =over
