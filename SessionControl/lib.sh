@@ -49,8 +49,16 @@ A library providing functions to support multiple sessions control.
 =item B<sesID>
 
 An array holding currently open session IDs. Sessions are strored from index 1,
-index 0 is always used for the "default" B<ID>. The default B<ID> always the last
-used I<ID>.
+index 0 is always used for the "default" B<ID>. The default B<ID> is always reset
+to the last used I<ID>.
+
+=item B<sesRunTimeout>
+
+A default timeout for C<sesRun>, if defined.
+
+=item B<sesExpectTimeout>
+
+A default timeout for C<sesExpect>, if defined.
 
 =back
 
@@ -141,7 +149,8 @@ If provided the B<sesID[0]> will be set to I<ID>.
 =item B<--timeout> I<TIMEOUT>
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
-Defaults to I<infinity>.
+Defaults to I<infinity> (-1) or sesRunTimeout if set.
+
 
 =item I<COMMAND>
 
@@ -157,7 +166,7 @@ Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 =cut
 
 sesRun() {
-  local timeout=-1
+  local timeout=${sesRunTimeout:--1}
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
@@ -236,7 +245,7 @@ If provided the B<sesID[0]> will be set to I<ID>.
 =item B<--timeout> I<TIMEOUT>
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
-Defaults to 120 seconds.
+Defaults to 120 seconds or sesExpectTimeout if set.
 
 =item I<REG_EXP>
 
@@ -252,7 +261,7 @@ Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 =cut
 
 sesExpect() {
-  local timeout=120
+  local timeout=${sesExpectTimeout:-120}
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
@@ -547,13 +556,13 @@ Success!
 
 =head1 EXAMPLES
 
-  Simply run C<id> in a session
+Simply run C<id> in a session
 
     sesOpen
     sesRun "id"
     ses Close
 
-  Run commands in two sessions
+Run commands in two sessions
 
     sesOpen
     sesOpen
@@ -573,18 +582,18 @@ Success!
     sesClose --id A
     sesClose --id B
 
-  Run command on remote machines
+Run command on remote machines
 
     sesOpen --id server
     sesOpen --id client
-    # note we need to let ssh execution to timeout as the ssh command actually
-    # does not finish, it will stay waiting for th epassword and the remote propmt
+    # note, we need to let ssh execution to timeout as the ssh command actually
+    # does not finish, it will stay waiting for the password and the remote prompt
     sesRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
     sesExpect "[Pp]assword"
-    sesSend "PASSWORD"$'\n'
+    sesSend "PASSWORD"$'\r'
     sesRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
     sesExpect "[Pp]assword"
-    sesSend "PASSWORD"$'\n'
+    sesSend "PASSWORD"$'\r'
     # check we are on the remote
     rlRun -s 'sesRun --id server "hostname -f"'
     rlAssertGrep 'server.example.com' $rlRun_LOG
@@ -593,6 +602,10 @@ Success!
     rlAssertGrep 'client.example.com' $rlRun_LOG
     rm -f $rlRun_LOG
     # optionally exit from ssh connections
+    # note, we need to let this execution to timeout as well as we are basically
+    # returning from the remote prompt to the local prompt - the one from
+    # the previousely timed out ssh execution
+    # alternatively one could do this by issuing sesSend "exit"$'\r'
     sesRun --id server --timeout 1 "exit"
     sesRun --id client --timeout 1 "exit"
     sesClose --id server
