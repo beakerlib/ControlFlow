@@ -1,6 +1,7 @@
 summary: Sessions handling library
 contact: Dalibor Pospíšil <dapospis@redhat.com>
 test: ./runtest.sh
+framework: beakerlib
 require:
 - /usr/bin/expect
 - /usr/bin/bash
