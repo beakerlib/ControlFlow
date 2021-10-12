@@ -1,0 +1,234 @@
+# NAME
+
+ses/basic
+
+# DESCRIPTION
+
+A library providing functions to support multiple sessions control.
+
+# VARIABLES
+
+- **sesID**
+
+    An array holding currently open session IDs. Sessions are strored from index 1,
+    index 0 is always used for the "default" **ID**. The default **ID** always the last
+    used _ID_.
+
+# FUNCTIONS
+
+## sesOpen
+
+Open new session.
+
+    sesOpen [options]
+
+### options
+
+- **--id** _ID_
+
+    If provided the user-specified _ID_ will be used. Othersiwe a numeric _ID_ will be
+    assigned.
+
+Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+
+## sesRun
+
+Run a command in the **sesID\[0\]** session.
+
+    sesRun [options] COMMAND
+
+### options
+
+- **--id** _ID_
+
+    If provided the **sesID\[0\]** will be set to _ID_.
+
+- **--timeout** _TIMEOUT_
+
+    The command execution time will be limitted to _TIMEOUT_ second(s).
+    Defaults to _infinity_.
+
+- _COMMAND_
+
+    The `COMMAND` to be executed in the **sesID\[0\]**.
+
+    Both _STDOUT_ and _STDERR_ of the command will be merged and passed to
+    _STDOUT_ continuously.
+
+Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+
+## sesExpect
+
+Similarly to an `expect` script, wait for a _REG\_EXP_ pattern appearence
+in the **sesID\[0\]** session.
+
+    sesExpect [options] REG_EXP
+
+### options
+
+- **--id** _ID_
+
+    If provided the **sesID\[0\]** will be set to _ID_.
+
+- **--timeout** _TIMEOUT_
+
+    The command execution time will be limitted to _TIMEOUT_ second(s).
+    Defaults to 120 seconds.
+
+- _REG\_EXP_
+
+    The pattern to be awaited in the session output.
+
+Both _STDOUT_ and _STDERR_ of the session will be merged and passed to
+_STDOUT_ continuously.
+
+Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+
+## sesSend
+
+Similarly to an `expect` script, send an _INPUT_ to the **sesID\[0\]** session.
+
+    sesSend [options] INPUT
+
+### options
+
+- **--id** _ID_
+
+    If provided the **sesID\[0\]** will be set to _ID_.
+
+- _INPUT_
+
+    The input to be send to the session. It may contain also control characters,
+    e.g. **\\003** to send break (^C).
+
+    Note, to execute a command using `sesSend` you need to append **\\r** to confirm
+    it on the prompt.
+
+Returns _0_ if successful.
+
+## sesSend
+
+Send raw expect code the session handling daemon.
+
+    sesRaw [options] CODE
+
+### options
+
+- **--id** _ID_
+
+    If provided the **sesID\[0\]** will be set to _ID_.
+
+- _CODE_
+
+    The code to be executed in the session handling expect daemon.
+
+    If `-` is passed, the code will be read from _STDIN_.
+
+Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+
+## sesClose
+
+Close the opened session **sesID\[0\]**.
+
+    sesClose [options]
+
+### options
+
+- **--id** _ID_
+
+    If provided the **sesID\[0\]** will be set to _ID_.
+
+Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+
+## sesCleanup
+
+Close all the remaining open sessions.
+
+    sesCleanup
+
+Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+
+# COMMON RESULT CODE
+
+There are specail _RETURN CODES_ commning from the library's functions.
+
+- **255**
+
+    The session ended unexpectedly. Any further interactions with the session will
+    end with an error.
+
+- **254**
+
+    The session call timed out. There may be a _command_ hanging or a _pattern_ was
+    not found in time.
+
+- **<254**
+
+    These return codes are typically comming from the executed command.
+
+- **0**
+
+    Success!
+
+# EXAMPLES
+
+    Simply run C<id> in a session
+
+      sesOpen
+      sesRun "id"
+      ses Close
+
+    Run commands in two sessions
+
+      sesOpen
+      sesOpen
+      sesRun --id ${sesID[1]} "id"
+      sesRun --id ${sesID[2]} "id"
+      sesRun "id"                   # run in sesID[2] as it was the last one used
+      sesClose --id ${sesID[1]}
+      sesClose --id ${sesID[2]}
+
+      sesOpen --id A
+      sesOpen --id B
+      sesRun --id A "id"
+      sesRun --id B "id"
+      sesRun "id"                   # run in B as it was the last one used
+      sesID=A                       # equal to sesID[0]=A
+      sesRun "id"                   # run in A
+      sesClose --id A
+      sesClose --id B
+
+    Run command on remote machines
+
+      sesOpen --id server
+      sesOpen --id client
+      # note we need to let ssh execution to timeout as the ssh command actually
+      # does not finish, it will stay waiting for th epassword and the remote propmt
+      sesRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
+      sesExpect "[Pp]assword"
+      sesSend "PASSWORD"$'\n'
+      sesRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
+      sesExpect "[Pp]assword"
+      sesSend "PASSWORD"$'\n'
+      # check we are on the remote
+      rlRun -s 'sesRun --id server "hostname -f"'
+      rlAssertGrep 'server.example.com' $rlRun_LOG
+      rm -f $rlRun_LOG
+      rlRun -s 'sesRun --id client "hostname -f"'
+      rlAssertGrep 'client.example.com' $rlRun_LOG
+      rm -f $rlRun_LOG
+      # optionally exit from ssh connections
+      sesRun --id server --timeout 1 "exit"
+      sesRun --id client --timeout 1 "exit"
+      sesClose --id server
+      sesClose --id client
+
+# FILES
+
+- `ses.tcl`
+
+    The daemon forked to handle each session.
+
+# AUTHORS
+
+- Dalibor Pospisil <dapospis@redhat.com>
