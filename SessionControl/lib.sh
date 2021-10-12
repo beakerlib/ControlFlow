@@ -178,7 +178,7 @@ sesRun() {
     set fd_res [open "$sesDir/result" w]
     set fd_out [open "$sesDir/output" w]
     send "\\r"
-    send {PS1="(\\\$?:$rand)> [\\u@\\h]\\\$([[ \\\$UID -eq 0 ]] && echo '#' || echo '\$') "}; send "\\r"
+    send {export PS1="(\\\$?:$rand)> [\\u@\\h]\\\$([[ \\\$UID -eq 0 ]] && echo '#' || echo '\$') " PROMPT_COMMAND=''}; send "\\r"
     expect -re {\\([0-9]+:${rand}\\)> }
     send "\\r"
     expect -re {\\([0-9]+:${rand}\\)> }
