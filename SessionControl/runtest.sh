@@ -74,6 +74,12 @@ rlJournalStart
     echo -en "1,2,3,4," > tmp
     rlRun "diff -u tmp $rlRun_LOG"
     rm -f $rlRun_LOG tmp
+    rlRun "sesRun --timeout 1 'sleep 2'" 254
+    rlRun "sesRun 'sleep 2'"
+    sesRunTimeout=1
+    rlRun "sesRun 'sleep 2'" 254
+    unset sesRunTimeout
+    rlRun "sesRun 'sleep 2'"
     sesClose
   rlPhaseEnd; }
 
