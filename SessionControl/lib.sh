@@ -186,18 +186,19 @@ sesRun() {
     expect -re {\\n}
     set timeout $timeout
     set buf {}
+    set printed_length 0
     expect {
       timeout { puts TIMEOUT; set EC 254; }
       eof { puts EOF; close \$fd_out; puts \$fd_res 255; close \$fd_res; exit 255; }
       -re {.+\$} {
         append buf "\${expect_out(buffer)}"
         if { [regexp {(.*?)\\(([0-9]+):${rand}\\)> } "\$buf" {} prev EC] } {
-          puts -nonewline \$fd_out "[string range "\$prev" \$printed_length end]"
+          puts -nonewline \$fd_out "[string map {\\r\\n \\n} [string range "\$prev" \$printed_length end]]"
           flush \$fd_out
           set buf "[string range "\$buf" [string length "\$prev"] end]"
           set printed_length 0
         } else {
-          puts -nonewline \$fd_out "\${expect_out(buffer)}"
+          puts -nonewline \$fd_out "[string map {\\r\\n \\n} \${expect_out(buffer)}]"
           flush \$fd_out
           incr printed_length [string length "\${expect_out(buffer)}"]
           exp_continue -continue_timer
@@ -277,7 +278,7 @@ sesExpect() {
       set res 1
       if { [uplevel {regexp {(^.*?$pattern)} "\$buf" {} prev}] } {
         uplevel {
-          puts -nonewline \$fd_out "[string range "\$prev" \$printed_length end]"
+          puts -nonewline \$fd_out "[string map {\\r\\n \\n} [string range "\$prev" \$printed_length end]]"
           flush \$fd_out
           set buf "[string range "\$buf" [string length "\$prev"] end]"
           set printed_length 0
@@ -294,7 +295,7 @@ sesExpect() {
         -re {.+\$} {
           append buf "\${expect_out(buffer)}"
           process {
-            puts -nonewline \$fd_out "\${expect_out(buffer)}"
+            puts -nonewline \$fd_out "[string map {\\r\\n \\n} \${expect_out(buffer)}]"
             flush \$fd_out
             incr printed_length [string length "\${expect_out(buffer)}"]
             after 250
