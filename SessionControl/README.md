@@ -1,6 +1,6 @@
 # NAME
 
-ses/basic
+**library(ses/basic)**
 
 # DESCRIPTION
 
@@ -54,7 +54,8 @@ Run a command in the **sesID\[0\]** session.
 - **--timeout** _TIMEOUT_
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
-    Defaults to _infinity_ (-1) or sesRunTimeout if set.
+
+    Defaults to _infinity_ (-1) or **sesRunTimeout** if set.
 
 - _COMMAND_
 
@@ -81,7 +82,8 @@ in the **sesID\[0\]** session.
 - **--timeout** _TIMEOUT_
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
-    Defaults to 120 seconds or sesExpectTimeout if set.
+
+    Defaults to _120_ seconds or **sesExpectTimeout** if set.
 
 - _REG\_EXP_
 

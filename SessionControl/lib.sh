@@ -36,7 +36,7 @@ __INTERNAL_ses_LIB_VERSION=1
 
 =head1 NAME
 
-ses/basic
+B<library(ses/basic)>
 
 =head1 DESCRIPTION
 
@@ -149,7 +149,8 @@ If provided the B<sesID[0]> will be set to I<ID>.
 =item B<--timeout> I<TIMEOUT>
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
-Defaults to I<infinity> (-1) or sesRunTimeout if set.
+
+Defaults to I<infinity> (-1) or B<sesRunTimeout> if set.
 
 
 =item I<COMMAND>
@@ -245,7 +246,8 @@ If provided the B<sesID[0]> will be set to I<ID>.
 =item B<--timeout> I<TIMEOUT>
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
-Defaults to 120 seconds or sesExpectTimeout if set.
+
+Defaults to I<120> seconds or B<sesExpectTimeout> if set.
 
 =item I<REG_EXP>
 
