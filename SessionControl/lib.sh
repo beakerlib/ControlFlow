@@ -83,7 +83,7 @@ assigned.
 
 =back
 
-Returns I<0> if successful. See section L<COMMON RESULT CODE|/"COMMON RESULT CODE"> for more details.
+Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -152,7 +152,7 @@ I<STDOUT> continuously.
 
 =back
 
-Returns I<0> if successful. See section L<COMMON RESULT CODE|/"COMMON RESULT CODE"> for more details.
+Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -246,7 +246,7 @@ The pattern to be awaited in the session output.
 Both I<STDOUT> and I<STDERR> of the session will be merged and passed to
 I<STDOUT> continuously.
 
-Returns I<0> if successful. See section L<COMMON RESULT CODE|/"COMMON RESULT CODE"> for more details.
+Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -387,7 +387,7 @@ If C<-> is passed, the code will be read from I<STDIN>.
 
 =back
 
-Returns I<0> if successful. See section L<COMMON RESULT CODE|/"COMMON RESULT CODE"> for more details.
+Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -430,7 +430,7 @@ If provided the B<sesID[0]> will be set to I<ID>.
 
 =back
 
-Returns I<0> if successful. See section L<COMMON RESULT CODE|/"COMMON RESULT CODE"> for more details.
+Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -465,7 +465,7 @@ Close all the remaining open sessions.
 
     sesCleanup
 
-Returns I<0> if successful. See section L<COMMON RESULT CODE|/"COMMON RESULT CODE"> for more details.
+Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -520,7 +520,7 @@ sesLibraryLoaded() {
 
 =head1 COMMON RESULT CODE
 
-There are specail I<RETURN CODES> commning from the library's cunctions.
+There are specail I<RETURN CODES> commning from the library's functions.
 
 =over
 
