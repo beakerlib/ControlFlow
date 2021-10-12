@@ -37,7 +37,7 @@ Open new session.
     If provided the user-specified _ID_ will be used. Othersiwe a numeric _ID_ will be
     assigned.
 
-Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
 ## sesRun
 
@@ -55,7 +55,7 @@ Run a command in the **sesID\[0\]** session.
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
-    Defaults to _infinity_ (-1) or **sesRunTimeout** if set.
+    Defaults to _infinity_ (**-1**) or **sesRunTimeout**, if set.
 
 - _COMMAND_
 
@@ -64,7 +64,7 @@ Run a command in the **sesID\[0\]** session.
     Both _STDOUT_ and _STDERR_ of the command will be merged and passed to
     _STDOUT_ continuously.
 
-Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
 ## sesExpect
 
@@ -83,7 +83,7 @@ in the **sesID\[0\]** session.
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
-    Defaults to _120_ seconds or **sesExpectTimeout** if set.
+    Defaults to **120** seconds or **sesExpectTimeout**, if set.
 
 - _REG\_EXP_
 
@@ -92,7 +92,7 @@ in the **sesID\[0\]** session.
 Both _STDOUT_ and _STDERR_ of the session will be merged and passed to
 _STDOUT_ continuously.
 
-Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
 ## sesSend
 
@@ -114,7 +114,7 @@ Similarly to an `expect` script, send an _INPUT_ to the **sesID\[0\]** session.
     Note, to execute a command using `sesSend` you need to append **\\r** to confirm
     it on the prompt.
 
-Returns _0_ if successful.
+Returns **0** if successful.
 
 ## sesSend
 
@@ -134,7 +134,7 @@ Send raw expect code the session handling daemon.
 
     If `-` is passed, the code will be read from _STDIN_.
 
-Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
 ## sesClose
 
@@ -148,7 +148,7 @@ Close the opened session **sesID\[0\]**.
 
     If provided the **sesID\[0\]** will be set to _ID_.
 
-Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
 ## sesCleanup
 
@@ -156,7 +156,7 @@ Close all the remaining open sessions.
 
     sesCleanup
 
-Returns _0_ if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
+Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
 # COMMON RESULT CODE
 

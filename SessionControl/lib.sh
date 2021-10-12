@@ -91,7 +91,7 @@ assigned.
 
 =back
 
-Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
+Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -150,7 +150,7 @@ If provided the B<sesID[0]> will be set to I<ID>.
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
 
-Defaults to I<infinity> (-1) or B<sesRunTimeout> if set.
+Defaults to I<infinity> (B<-1>) or B<sesRunTimeout>, if set.
 
 
 =item I<COMMAND>
@@ -162,7 +162,7 @@ I<STDOUT> continuously.
 
 =back
 
-Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
+Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -247,7 +247,7 @@ If provided the B<sesID[0]> will be set to I<ID>.
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
 
-Defaults to I<120> seconds or B<sesExpectTimeout> if set.
+Defaults to B<120> seconds or B<sesExpectTimeout>, if set.
 
 =item I<REG_EXP>
 
@@ -258,7 +258,7 @@ The pattern to be awaited in the session output.
 Both I<STDOUT> and I<STDERR> of the session will be merged and passed to
 I<STDOUT> continuously.
 
-Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
+Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -352,7 +352,7 @@ it on the prompt.
 
 =back
 
-Returns I<0> if successful.
+Returns B<0> if successful.
 
 =cut
 
@@ -399,7 +399,7 @@ If C<-> is passed, the code will be read from I<STDIN>.
 
 =back
 
-Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
+Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -442,7 +442,7 @@ If provided the B<sesID[0]> will be set to I<ID>.
 
 =back
 
-Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
+Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
@@ -477,7 +477,7 @@ Close all the remaining open sessions.
 
     sesCleanup
 
-Returns I<0> if successful. See section L</COMMON RESULT CODE> for more details.
+Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
