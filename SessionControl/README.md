@@ -182,7 +182,7 @@ There are specail _RETURN CODES_ commning from the library's functions.
 
 # EXAMPLES
 
-Simply run `id` in a session
+Simply run `whoami` command in a session
 
     sesOpen
     sesRun "id"
@@ -192,50 +192,50 @@ Run commands in two sessions
 
     sesOpen
     sesOpen
-    sesRun --id ${sesID[1]} "id"
-    sesRun --id ${sesID[2]} "id"
-    sesRun "id"                   # run in sesID[2] as it was the last one used
+    sesRun --id ${sesID[1]} "whoami"
+    sesRun --id ${sesID[2]} "whoami"
+    sesRun "whoami"                   # run in sesID[2] as it was the last one used
     sesClose --id ${sesID[1]}
     sesClose --id ${sesID[2]}
 
     sesOpen --id A
     sesOpen --id B
-    sesRun --id A "id"
-    sesRun --id B "id"
-    sesRun "id"                   # run in B as it was the last one used
-    sesID=A                       # equal to sesID[0]=A
-    sesRun "id"                   # run in A
+    sesRun --id A "whoami"
+    sesRun --id B "whoami"
+    sesRun "whoami"                   # run in B as it was the last one used
+    sesID=A                           # equal to sesID[0]=A
+    sesRun "whoami"                   # run in A
     sesClose --id A
     sesClose --id B
 
 Run command on remote machines
 
-    sesOpen --id server
-    sesOpen --id client
+      sesOpen --id server
+      sesOpen --id client
     # note, we need to let ssh execution to timeout as the ssh command actually
     # does not finish, it will stay waiting for the password and the remote prompt
-    sesRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
-    sesExpect "[Pp]assword"
-    sesSend "PASSWORD"$'\r'
-    sesRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
-    sesExpect "[Pp]assword"
-    sesSend "PASSWORD"$'\r'
+      sesRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
+      sesExpect "[Pp]assword"
+      sesSend "PASSWORD"$'\r'
+      sesRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
+      sesExpect "[Pp]assword"
+      sesSend "PASSWORD"$'\r'
     # check we are on the remote
-    rlRun -s 'sesRun --id server "hostname -f"'
-    rlAssertGrep 'server.example.com' $rlRun_LOG
-    rm -f $rlRun_LOG
-    rlRun -s 'sesRun --id client "hostname -f"'
-    rlAssertGrep 'client.example.com' $rlRun_LOG
-    rm -f $rlRun_LOG
+      rlRun -s 'sesRun --id server "hostname -f"'
+      rlAssertGrep 'server.example.com' $rlRun_LOG
+      rm -f $rlRun_LOG
+      rlRun -s 'sesRun --id client "hostname -f"'
+      rlAssertGrep 'client.example.com' $rlRun_LOG
+      rm -f $rlRun_LOG
     # optionally exit from ssh connections
     # note, we need to let this execution to timeout as well as we are basically
     # returning from the remote prompt to the local prompt - the one from
     # the previousely timed out ssh execution
     # alternatively one could do this by issuing sesSend "exit"$'\r'
-    sesRun --id server --timeout 1 "exit"
-    sesRun --id client --timeout 1 "exit"
-    sesClose --id server
-    sesClose --id client
+      sesRun --id server --timeout 1 "exit"
+      sesRun --id client --timeout 1 "exit"
+      sesClose --id server
+      sesClose --id client
 
 # FILES
 
