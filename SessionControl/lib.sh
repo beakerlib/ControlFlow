@@ -52,11 +52,11 @@ An array holding currently open session IDs. Sessions are strored from index 1,
 index 0 is always used for the "default" B<ID>. The default B<ID> is always reset
 to the last used I<ID>.
 
-=item B<sesRunTimeout>
+=item B<sesRunTIMEOUT>
 
 A default timeout for C<sesRun>, if defined.
 
-=item B<sesExpectTimeout>
+=item B<sesExpectTIMEOUT>
 
 A default timeout for C<sesExpect>, if defined.
 
@@ -150,7 +150,7 @@ If provided the B<sesID[0]> will be set to I<ID>.
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
 
-Defaults to I<infinity> (B<-1>) or B<sesRunTimeout>, if set.
+Defaults to I<infinity> (B<-1>) or B<sesRunTIMEOUT>, if set.
 
 
 =item I<COMMAND>
@@ -167,7 +167,7 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 =cut
 
 sesRun() {
-  local timeout=${sesRunTimeout:--1}
+  local timeout=${sesRunTIMEOUT:--1}
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
@@ -247,7 +247,7 @@ If provided the B<sesID[0]> will be set to I<ID>.
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
 
-Defaults to B<120> seconds or B<sesExpectTimeout>, if set.
+Defaults to B<120> seconds or B<sesExpectTIMEOUT>, if set.
 
 =item I<REG_EXP>
 
@@ -263,7 +263,7 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 =cut
 
 sesExpect() {
-  local timeout=${sesExpectTimeout:-120}
+  local timeout=${sesExpectTIMEOUT:-120}
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")

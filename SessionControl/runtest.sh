@@ -76,9 +76,9 @@ rlJournalStart
     rm -f $rlRun_LOG tmp
     rlRun "sesRun --timeout 1 'sleep 2'" 254
     rlRun "sesRun 'sleep 2'"
-    sesRunTimeout=1
+    sesRunTIMEOUT=1
     rlRun "sesRun 'sleep 2'" 254
-    unset sesRunTimeout
+    unset sesRunTIMEOUT
     rlRun "sesRun 'sleep 2'"
     sesClose
   rlPhaseEnd; }
