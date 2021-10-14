@@ -14,11 +14,11 @@ A library providing functions to support multiple sessions control.
     index 0 is always used for the "default" **ID**. The default **ID** is always reset
     to the last used _ID_.
 
-- **sesRunTimeout**
+- **sesRunTIMEOUT**
 
     A default timeout for `sesRun`, if defined.
 
-- **sesExpectTimeout**
+- **sesExpectTIMEOUT**
 
     A default timeout for `sesExpect`, if defined.
 
@@ -55,7 +55,7 @@ Run a command in the **sesID\[0\]** session.
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
-    Defaults to _infinity_ (**-1**) or **sesRunTimeout**, if set.
+    Defaults to _infinity_ (**-1**) or **sesRunTIMEOUT**, if set.
 
 - _COMMAND_
 
@@ -83,7 +83,7 @@ in the **sesID\[0\]** session.
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
-    Defaults to **120** seconds or **sesExpectTimeout**, if set.
+    Defaults to **120** seconds or **sesExpectTIMEOUT**, if set.
 
 - _REG\_EXP_
 
