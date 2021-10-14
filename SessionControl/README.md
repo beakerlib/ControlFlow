@@ -116,7 +116,7 @@ Similarly to an `expect` script, send an _INPUT_ to the **sesID\[0\]** session.
 
 Returns **0** if successful.
 
-## sesSend
+## sesRaw
 
 Send raw expect code the session handling daemon.
 
@@ -160,7 +160,7 @@ Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-c
 
 # COMMON RESULT CODE
 
-There are specail _RETURN CODES_ commning from the library's functions.
+There are special _RETURN CODES_ coming from the library's functions.
 
 - **255**
 
@@ -174,7 +174,7 @@ There are specail _RETURN CODES_ commning from the library's functions.
 
 - **<254**
 
-    These return codes are typically comming from the executed command.
+    These return codes are typically coming from the executed command.
 
 - **0**
 
@@ -186,7 +186,7 @@ Simply run `whoami` command in a session
 
     sesOpen
     sesRun "id"
-    ses Close
+    sesClose
 
 Run commands in two sessions
 
