@@ -377,7 +377,7 @@ EOF
 : <<'=cut'
 =pod
 
-=head2 sesSend
+=head2 sesRaw
 
 Send raw expect code the session handling daemon.
 
@@ -532,7 +532,7 @@ sesLibraryLoaded() {
 
 =head1 COMMON RESULT CODE
 
-There are specail I<RETURN CODES> commning from the library's functions.
+There are special I<RETURN CODES> coming from the library's functions.
 
 =over
 
@@ -548,7 +548,7 @@ not found in time.
 
 =item B<<254>
 
-These return codes are typically comming from the executed command.
+These return codes are typically coming from the executed command.
 
 =item B<0>
 
@@ -562,7 +562,7 @@ Simply run C<whoami> command in a session
 
     sesOpen
     sesRun "id"
-    ses Close
+    sesClose
 
 Run commands in two sessions
 
