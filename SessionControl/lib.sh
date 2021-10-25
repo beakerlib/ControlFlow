@@ -2,8 +2,6 @@
 # vim: dict=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   lib.sh of session
-#   Description: What the test does
 #   Author: Dalibor Pospisil <dapospis@redhat.com>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -25,18 +23,18 @@
 #   Boston, MA 02110-1301, USA.
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#   library-prefix = ses
+#   library-prefix = session
 #   library-version = 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-__INTERNAL_ses_LIB_NAME="SessionControl"
-__INTERNAL_ses_LIB_VERSION=1
+__INTERNAL_session_LIB_NAME="SessionControl"
+__INTERNAL_session_LIB_VERSION=1
 
 : <<'=cut'
 =pod
 
 =head1 NAME
 
-B<library(ses/basic)>
+B<library(SessionControl/basic)>
 
 =head1 DESCRIPTION
 
@@ -46,19 +44,19 @@ A library providing functions to support multiple sessions control.
 
 =over
 
-=item B<sesID>
+=item B<sessionID>
 
 An array holding currently open session IDs. Sessions are strored from index 1,
 index 0 is always used for the "default" B<ID>. The default B<ID> is always reset
 to the last used I<ID>.
 
-=item B<sesRunTIMEOUT>
+=item B<sessionRunTIMEOUT>
 
-A default timeout for C<sesRun>, if defined.
+A default timeout for C<sessionRun>, if defined.
 
-=item B<sesExpectTIMEOUT>
+=item B<sessionExpectTIMEOUT>
 
-A default timeout for C<sesExpect>, if defined.
+A default timeout for C<sessionExpect>, if defined.
 
 =back
 
@@ -66,19 +64,19 @@ A default timeout for C<sesExpect>, if defined.
 
 =cut
 
-echo -n "loading library $__INTERNAL_ses_LIB_NAME v$__INTERNAL_ses_LIB_VERSION... "
+echo -n "loading library $__INTERNAL_session_LIB_NAME v$__INTERNAL_session_LIB_VERSION... "
 
 
-sesID=()
+sessionID=()
 
 : <<'=cut'
 =pod
 
-=head2 sesOpen
+=head2 sessionOpen
 
 Open new session.
 
-    sesOpen [options]
+    sessionOpen [options]
 
 =head3 options
 
@@ -95,9 +93,9 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
-sesOpen() {
+sessionOpen() {
   local ID=0
-  while [[ -d "$__INTERNAL_sesDir/$ID" ]]; do let ID++; done
+  while [[ -d "$__INTERNAL_sessionDir/$ID" ]]; do let ID++; done
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
@@ -107,22 +105,22 @@ sesOpen() {
     esac
   done
 
-  local sesDir
-  sesDir="$__INTERNAL_sesDir/$ID"
-  # set sesID index 0 and append to the list
-  sesID="$ID"
-  sesID+=( "$ID" )
-  rlLogInfo "opening session $sesID"
-  mkdir -p "$sesDir"
-  mkfifo "$sesDir/input"
-  mkfifo "$sesDir/output"
+  local sessionDir
+  sessionDir="$__INTERNAL_sessionDir/$ID"
+  # set sessionID index 0 and append to the list
+  sessionID="$ID"
+  sessionID+=( "$ID" )
+  rlLogInfo "opening session $sessionID"
+  mkdir -p "$sessionDir"
+  mkfifo "$sessionDir/input"
+  mkfifo "$sessionDir/output"
   # open session
-  $sesLibraryDir/ses.tcl bash "$sesDir/input" "$sesDir/output" 2>/dev/null &
-  local sesPID=$!
-  disown $sesPID
-  echo $sesPID > "$sesDir/pid"
-  rlLogInfo "sesID=$sesID"
-  sesRaw - << EOF
+  $sessionLibraryDir/session.tcl bash "$sessionDir/input" "$sessionDir/output" 2>/dev/null &
+  local sessionPID=$!
+  disown $sessionPID
+  echo $sessionPID > "$sessionDir/pid"
+  rlLogInfo "sessionID=$sessionID"
+  sessionRaw - << EOF
     set buf {}
     set printed_length 0
 EOF
@@ -132,11 +130,11 @@ EOF
 : <<'=cut'
 =pod
 
-=head2 sesRun
+=head2 sessionRun
 
-Run a command in the B<sesID[0]> session.
+Run a command in the B<sessionID[0]> session.
 
-    sesRun [options] COMMAND
+    sessionRun [options] COMMAND
 
 =head3 options
 
@@ -144,18 +142,18 @@ Run a command in the B<sesID[0]> session.
 
 =item B<--id> I<ID>
 
-If provided the B<sesID[0]> will be set to I<ID>.
+If provided the B<sessionID[0]> will be set to I<ID>.
 
 =item B<--timeout> I<TIMEOUT>
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
 
-Defaults to I<infinity> (B<-1>) or B<sesRunTIMEOUT>, if set.
+Defaults to I<infinity> (B<-1>) or B<sessionRunTIMEOUT>, if set.
 
 
 =item I<COMMAND>
 
-The C<COMMAND> to be executed in the B<sesID[0]>.
+The C<COMMAND> to be executed in the B<sessionID[0]>.
 
 Both I<STDOUT> and I<STDERR> of the command will be merged and passed to
 I<STDOUT> continuously.
@@ -166,12 +164,12 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
-sesRun() {
-  local timeout=${sesRunTIMEOUT:--1}
+sessionRun() {
+  local timeout=${sessionRunTIMEOUT:--1}
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
-        sesID="$2"
+        sessionID="$2"
         shift 2
         ;;
       "--timeout")
@@ -180,13 +178,13 @@ sesRun() {
         ;;
     esac
   done
-  local sesDir="$__INTERNAL_sesDir/$sesID"
-  local rand=$((++__INTERNAL_sesCount))
+  local sessionDir="$__INTERNAL_sessionDir/$sessionID"
+  local rand=$((++__INTERNAL_sessionCount))
   local command="$1"
-  sesRaw - << EOF
+  sessionRaw - << EOF
     set timeout 10
-    set fd_res [open "$sesDir/result" w]
-    set fd_out [open "$sesDir/output" w]
+    set fd_res [open "$sessionDir/result" w]
+    set fd_out [open "$sessionDir/output" w]
     send "\\r"
     send {export PS1="(\\\$?:$rand)> [\\u@\\h]\\\$([[ \\\$UID -eq 0 ]] && echo '#' || echo '\$') " PROMPT_COMMAND=''}; send "\\r"
     expect -re {\\([0-9]+:${rand}\\)> }
@@ -220,20 +218,20 @@ sesRun() {
     close \$fd_res
 EOF
   [[ $? -ne 0 ]] && return 255
-  cat $sesDir/output
-  return "$(cat $sesDir/result)"
+  cat $sessionDir/output
+  return "$(cat $sessionDir/result)"
 }
 
 
 : <<'=cut'
 =pod
 
-=head2 sesExpect
+=head2 sessionExpect
 
 Similarly to an C<expect> script, wait for a I<REG_EXP> pattern appearence
-in the B<sesID[0]> session.
+in the B<sessionID[0]> session.
 
-    sesExpect [options] REG_EXP
+    sessionExpect [options] REG_EXP
 
 =head3 options
 
@@ -241,13 +239,13 @@ in the B<sesID[0]> session.
 
 =item B<--id> I<ID>
 
-If provided the B<sesID[0]> will be set to I<ID>.
+If provided the B<sessionID[0]> will be set to I<ID>.
 
 =item B<--timeout> I<TIMEOUT>
 
 The command execution time will be limitted to I<TIMEOUT> second(s).
 
-Defaults to B<120> seconds or B<sesExpectTIMEOUT>, if set.
+Defaults to B<120> seconds or B<sessionExpectTIMEOUT>, if set.
 
 =item I<REG_EXP>
 
@@ -262,12 +260,12 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
-sesExpect() {
-  local timeout=${sesExpectTIMEOUT:-120}
+sessionExpect() {
+  local timeout=${sessionExpectTIMEOUT:-120}
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
-        sesID="$2"
+        sessionID="$2"
         shift 2
         ;;
       "--timeout")
@@ -276,12 +274,12 @@ sesExpect() {
         ;;
     esac
   done
-  local sesDir="$__INTERNAL_sesDir/$sesID"
+  local sessionDir="$__INTERNAL_sessionDir/$sessionID"
   local pattern="$1"
-  sesRaw - << EOF
+  sessionRaw - << EOF
     set EC 0
-    set fd_res [open "$sesDir/result" w]
-    set fd_out [open "$sesDir/output" w]
+    set fd_res [open "$sessionDir/result" w]
+    set fd_out [open "$sessionDir/output" w]
     set timeout $timeout
 
     # process buffer by regexp matching
@@ -320,19 +318,19 @@ sesExpect() {
     close \$fd_res
 EOF
   [[ $? -ne 0 ]] && return 1
-  cat $sesDir/output
-  return "$(cat $sesDir/result)"
+  cat $sessionDir/output
+  return "$(cat $sessionDir/result)"
 }
 
 
 : <<'=cut'
 =pod
 
-=head2 sesSend
+=head2 sessionSend
 
-Similarly to an C<expect> script, send an I<INPUT> to the B<sesID[0]> session.
+Similarly to an C<expect> script, send an I<INPUT> to the B<sessionID[0]> session.
 
-    sesSend [options] INPUT
+    sessionSend [options] INPUT
 
 =head3 options
 
@@ -340,14 +338,14 @@ Similarly to an C<expect> script, send an I<INPUT> to the B<sesID[0]> session.
 
 =item B<--id> I<ID>
 
-If provided the B<sesID[0]> will be set to I<ID>.
+If provided the B<sessionID[0]> will be set to I<ID>.
 
 =item I<INPUT>
 
 The input to be send to the session. It may contain also control characters,
 e.g. B<\003> to send break (^C).
 
-Note, to execute a command using C<sesSend> you need to append B<\r> to confirm
+Note, to execute a command using C<sessionSend> you need to append B<\r> to confirm
 it on the prompt.
 
 =back
@@ -356,18 +354,18 @@ Returns B<0> if successful.
 
 =cut
 
-sesSend() {
+sessionSend() {
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
-        sesID="$2"
+        sessionID="$2"
         shift 2
         ;;
     esac
   done
-  local sesDir="$__INTERNAL_sesDir/$sesID"
+  local sessionDir="$__INTERNAL_sessionDir/$sessionID"
   local command="$1"
-  sesRaw - << EOF
+  sessionRaw - << EOF
     send {$command}
 EOF
   #[[ $? -ne 0 ]] && return 1
@@ -377,11 +375,11 @@ EOF
 : <<'=cut'
 =pod
 
-=head2 sesRaw
+=head2 sessionRaw
 
 Send raw expect code the session handling daemon.
 
-    sesRaw [options] CODE
+    sessionRaw [options] CODE
 
 =head3 options
 
@@ -389,7 +387,7 @@ Send raw expect code the session handling daemon.
 
 =item B<--id> I<ID>
 
-If provided the B<sesID[0]> will be set to I<ID>.
+If provided the B<sessionID[0]> will be set to I<ID>.
 
 =item I<CODE>
 
@@ -403,34 +401,34 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
-sesRaw() {
+sessionRaw() {
   [[ "$1" == "--id" ]] && {
-    sesID="$2"
+    sessionID="$2"
     shift 2
   }
   local command="$1"
-  local sesDir="$__INTERNAL_sesDir/$sesID"
-  kill -n 0 "$(<$sesDir/pid)" > /dev/null 2>&1 || {
+  local sessionDir="$__INTERNAL_sessionDir/$sessionID"
+  kill -n 0 "$(<$sessionDir/pid)" > /dev/null 2>&1 || {
     rlLogError "session $ID is not open"
     return 255
   }
   if [[ "$command" == "-" ]]; then
     command="$(cat -)"
   fi
-  [[ -n "$DEBUG" ]] && { rlLogDebug "ID=$sesID, command="; echo "$command"; }
+  [[ -n "$DEBUG" ]] && { rlLogDebug "ID=$sessionID, command="; echo "$command"; }
   [[ -z "$DEBUG" ]] && command='log_user 0'$'\n'"$command"$'\n'"log_user 1"
-  cat > $sesDir/input <<< "$command"
+  cat > $sessionDir/input <<< "$command"
 }
 
 
 : <<'=cut'
 =pod
 
-=head2 sesClose
+=head2 sessionClose
 
-Close the opened session B<sesID[0]>.
+Close the opened session B<sessionID[0]>.
 
-    sesClose [options]
+    sessionClose [options]
 
 =head3 options
 
@@ -438,7 +436,7 @@ Close the opened session B<sesID[0]>.
 
 =item B<--id> I<ID>
 
-If provided the B<sesID[0]> will be set to I<ID>.
+If provided the B<sessionID[0]> will be set to I<ID>.
 
 =back
 
@@ -446,24 +444,24 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
-sesClose() {
+sessionClose() {
   local id
   [[ "$1" == "--id" ]] && {
-    sesID="$2"
+    sessionID="$2"
     shift 2
   }
   local command="$1"
-  local sesDir="$__INTERNAL_sesDir/$sesID"
-  kill -n 0 "$(<$sesDir/pid)" > /dev/null 2>&1 || {
+  local sessionDir="$__INTERNAL_sessionDir/$sessionID"
+  kill -n 0 "$(<$sessionDir/pid)" > /dev/null 2>&1 || {
     rlLogInfo "session $ID is not open"
     return 0
   }
-  rlLogInfo "closing session $sesID"
-  sesRaw 'exit'
-  kill "$(<$sesDir/pid)" > /dev/null 2>&1
+  rlLogInfo "closing session $sessionID"
+  sessionRaw 'exit'
+  kill "$(<$sessionDir/pid)" > /dev/null 2>&1
   sleep 0.25
-  kill -s 0 "$(<$sesDir/pid)" > /dev/null 2>&1 || {
-    rm -rf "$sesDir"
+  kill -s 0 "$(<$sessionDir/pid)" > /dev/null 2>&1 || {
+    rm -rf "$sessionDir"
   }
 }
 
@@ -471,24 +469,24 @@ sesClose() {
 : <<'=cut'
 =pod
 
-=head2 sesCleanup
+=head2 sessionCleanup
 
 Close all the remaining open sessions.
 
-    sesCleanup
+    sessionCleanup
 
 Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
 
-sesCleanup() {
+sessionCleanup() {
   local id
-  [[ -z "$__INTERNAL_sesDir" ]] && {
+  [[ -z "$__INTERNAL_sessionDir" ]] && {
     rlLogError 'Sessions dir is not set'
     retrun 1
   }
-  for id in $__INTERNAL_sesDir/*; do
-    sesClose --id "$(basename $id)"
+  for id in $__INTERNAL_sessionDir/*; do
+    sessionClose --id "$(basename $id)"
   done
 }
 
@@ -503,9 +501,9 @@ sesCleanup() {
 #   check that all required packages are installed. The function
 #   should return 0 only when the library is ready to serve.
 
-sesLibraryLoaded() {
+sessionLibraryLoaded() {
 
-  echo -n "initiating library $__INTERNAL_ses_LIB_NAME v$__INTERNAL_ses_LIB_VERSION... "
+  echo -n "initiating library $__INTERNAL_session_LIB_NAME v$__INTERNAL_session_LIB_VERSION... "
   if ! egrep -qi '(vmx|svm|PowerNV)' /proc/cpuinfo; then
     rlLogError "Your CPU doesn't support VMX/SVM/PowerNV"
   fi
@@ -515,9 +513,9 @@ sesLibraryLoaded() {
     res=1
   fi
 
-  __INTERNAL_sesDir="$BEAKERLIB_DIR/sessions"
-  mkdir -p "$__INTERNAL_sesDir"
-  rm -rf "${__INTERNAL_sesDir:?}/*"
+  __INTERNAL_sessionDir="$BEAKERLIB_DIR/sessions"
+  mkdir -p "$__INTERNAL_sessionDir"
+  rm -rf "${__INTERNAL_sessionDir:?}/*"
   echo "done."
   return $res
 }
@@ -560,65 +558,65 @@ Success!
 
 Simply run C<whoami> command in a session
 
-    sesOpen
-    sesRun "id"
-    sesClose
+    sessionOpen
+    sessionRun "id"
+    sessionClose
 
 Run commands in two sessions
 
-    sesOpen
-    sesOpen
-    sesRun --id ${sesID[1]} "whoami"
-    sesRun --id ${sesID[2]} "whoami"
-    sesRun "whoami"                   # run in sesID[2] as it was the last one used
-    sesClose --id ${sesID[1]}
-    sesClose --id ${sesID[2]}
+    sessionOpen
+    sessionOpen
+    sessionRun --id ${sessionID[1]} "whoami"
+    sessionRun --id ${sessionID[2]} "whoami"
+    sessionRun "whoami"                   # run in sessionID[2] as it was the last one used
+    sessionClose --id ${sessionID[1]}
+    sessionClose --id ${sessionID[2]}
 
-    sesOpen --id A
-    sesOpen --id B
-    sesRun --id A "whoami"
-    sesRun --id B "whoami"
-    sesRun "whoami"                   # run in B as it was the last one used
-    sesID=A                           # equal to sesID[0]=A
-    sesRun "whoami"                   # run in A
-    sesClose --id A
-    sesClose --id B
+    sessionOpen --id A
+    sessionOpen --id B
+    sessionRun --id A "whoami"
+    sessionRun --id B "whoami"
+    sessionRun "whoami"                   # run in B as it was the last one used
+    sessionID=A                           # equal to sessionID[0]=A
+    sessionRun "whoami"                   # run in A
+    sessionClose --id A
+    sessionClose --id B
 
 Run command on remote machines
 
-    sesOpen --id server
-    sesOpen --id client
+    sessionOpen --id server
+    sessionOpen --id client
   # note, we need to let ssh execution to timeout as the ssh command actually
   # does not finish, it will stay waiting for the password and the remote prompt
-    sesRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
-    sesExpect "[Pp]assword"
-    sesSend "PASSWORD"$'\r'
-    sesRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
-    sesExpect "[Pp]assword"
-    sesSend "PASSWORD"$'\r'
+    sessionRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
+    sessionExpect "[Pp]assword"
+    sessionSend "PASSWORD"$'\r'
+    sessionRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
+    sessionExpect "[Pp]assword"
+    sessionSend "PASSWORD"$'\r'
   # check we are on the remote
-    rlRun -s 'sesRun --id server "hostname -f"'
+    rlRun -s 'sessionRun --id server "hostname -f"'
     rlAssertGrep 'server.example.com' $rlRun_LOG
     rm -f $rlRun_LOG
-    rlRun -s 'sesRun --id client "hostname -f"'
+    rlRun -s 'sessionRun --id client "hostname -f"'
     rlAssertGrep 'client.example.com' $rlRun_LOG
     rm -f $rlRun_LOG
   # optionally exit from ssh connections
   # note, we need to let this execution to timeout as well as we are basically
   # returning from the remote prompt to the local prompt - the one from
   # the previousely timed out ssh execution
-  # alternatively one could do this by issuing sesSend "exit"$'\r'
-    sesRun --id server --timeout 1 "exit"
-    sesRun --id client --timeout 1 "exit"
-    sesClose --id server
-    sesClose --id client
+  # alternatively one could do this by issuing sessionSend "exit"$'\r'
+    sessionRun --id server --timeout 1 "exit"
+    sessionRun --id client --timeout 1 "exit"
+    sessionClose --id server
+    sessionClose --id client
 
 
 =head1 FILES
 
 =over
 
-=item F<ses.tcl>
+=item F<session.tcl>
 
 The daemon forked to handle each session.
 

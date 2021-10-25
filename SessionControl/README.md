@@ -1,6 +1,6 @@
 # NAME
 
-**library(ses/basic)**
+**library(SessionControl/basic)**
 
 # DESCRIPTION
 
@@ -8,27 +8,27 @@ A library providing functions to support multiple sessions control.
 
 # VARIABLES
 
-- **sesID**
+- **sessionID**
 
     An array holding currently open session IDs. Sessions are strored from index 1,
     index 0 is always used for the "default" **ID**. The default **ID** is always reset
     to the last used _ID_.
 
-- **sesRunTIMEOUT**
+- **sessionRunTIMEOUT**
 
-    A default timeout for `sesRun`, if defined.
+    A default timeout for `sessionRun`, if defined.
 
-- **sesExpectTIMEOUT**
+- **sessionExpectTIMEOUT**
 
-    A default timeout for `sesExpect`, if defined.
+    A default timeout for `sessionExpect`, if defined.
 
 # FUNCTIONS
 
-## sesOpen
+## sessionOpen
 
 Open new session.
 
-    sesOpen [options]
+    sessionOpen [options]
 
 ### options
 
@@ -39,51 +39,51 @@ Open new session.
 
 Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
-## sesRun
+## sessionRun
 
-Run a command in the **sesID\[0\]** session.
+Run a command in the **sessionID\[0\]** session.
 
-    sesRun [options] COMMAND
+    sessionRun [options] COMMAND
 
 ### options
 
 - **--id** _ID_
 
-    If provided the **sesID\[0\]** will be set to _ID_.
+    If provided the **sessionID\[0\]** will be set to _ID_.
 
 - **--timeout** _TIMEOUT_
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
-    Defaults to _infinity_ (**-1**) or **sesRunTIMEOUT**, if set.
+    Defaults to _infinity_ (**-1**) or **sessionRunTIMEOUT**, if set.
 
 - _COMMAND_
 
-    The `COMMAND` to be executed in the **sesID\[0\]**.
+    The `COMMAND` to be executed in the **sessionID\[0\]**.
 
     Both _STDOUT_ and _STDERR_ of the command will be merged and passed to
     _STDOUT_ continuously.
 
 Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
-## sesExpect
+## sessionExpect
 
 Similarly to an `expect` script, wait for a _REG\_EXP_ pattern appearence
-in the **sesID\[0\]** session.
+in the **sessionID\[0\]** session.
 
-    sesExpect [options] REG_EXP
+    sessionExpect [options] REG_EXP
 
 ### options
 
 - **--id** _ID_
 
-    If provided the **sesID\[0\]** will be set to _ID_.
+    If provided the **sessionID\[0\]** will be set to _ID_.
 
 - **--timeout** _TIMEOUT_
 
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
-    Defaults to **120** seconds or **sesExpectTIMEOUT**, if set.
+    Defaults to **120** seconds or **sessionExpectTIMEOUT**, if set.
 
 - _REG\_EXP_
 
@@ -94,39 +94,39 @@ _STDOUT_ continuously.
 
 Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
-## sesSend
+## sessionSend
 
-Similarly to an `expect` script, send an _INPUT_ to the **sesID\[0\]** session.
+Similarly to an `expect` script, send an _INPUT_ to the **sessionID\[0\]** session.
 
-    sesSend [options] INPUT
+    sessionSend [options] INPUT
 
 ### options
 
 - **--id** _ID_
 
-    If provided the **sesID\[0\]** will be set to _ID_.
+    If provided the **sessionID\[0\]** will be set to _ID_.
 
 - _INPUT_
 
     The input to be send to the session. It may contain also control characters,
     e.g. **\\003** to send break (^C).
 
-    Note, to execute a command using `sesSend` you need to append **\\r** to confirm
+    Note, to execute a command using `sessionSend` you need to append **\\r** to confirm
     it on the prompt.
 
 Returns **0** if successful.
 
-## sesRaw
+## sessionRaw
 
 Send raw expect code the session handling daemon.
 
-    sesRaw [options] CODE
+    sessionRaw [options] CODE
 
 ### options
 
 - **--id** _ID_
 
-    If provided the **sesID\[0\]** will be set to _ID_.
+    If provided the **sessionID\[0\]** will be set to _ID_.
 
 - _CODE_
 
@@ -136,25 +136,25 @@ Send raw expect code the session handling daemon.
 
 Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
-## sesClose
+## sessionClose
 
-Close the opened session **sesID\[0\]**.
+Close the opened session **sessionID\[0\]**.
 
-    sesClose [options]
+    sessionClose [options]
 
 ### options
 
 - **--id** _ID_
 
-    If provided the **sesID\[0\]** will be set to _ID_.
+    If provided the **sessionID\[0\]** will be set to _ID_.
 
 Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
-## sesCleanup
+## sessionCleanup
 
 Close all the remaining open sessions.
 
-    sesCleanup
+    sessionCleanup
 
 Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 
@@ -184,62 +184,62 @@ There are special _RETURN CODES_ coming from the library's functions.
 
 Simply run `whoami` command in a session
 
-    sesOpen
-    sesRun "id"
-    sesClose
+    sessionOpen
+    sessionRun "id"
+    sessionClose
 
 Run commands in two sessions
 
-    sesOpen
-    sesOpen
-    sesRun --id ${sesID[1]} "whoami"
-    sesRun --id ${sesID[2]} "whoami"
-    sesRun "whoami"                   # run in sesID[2] as it was the last one used
-    sesClose --id ${sesID[1]}
-    sesClose --id ${sesID[2]}
+    sessionOpen
+    sessionOpen
+    sessionRun --id ${sessionID[1]} "whoami"
+    sessionRun --id ${sessionID[2]} "whoami"
+    sessionRun "whoami"                   # run in sessionID[2] as it was the last one used
+    sessionClose --id ${sessionID[1]}
+    sessionClose --id ${sessionID[2]}
 
-    sesOpen --id A
-    sesOpen --id B
-    sesRun --id A "whoami"
-    sesRun --id B "whoami"
-    sesRun "whoami"                   # run in B as it was the last one used
-    sesID=A                           # equal to sesID[0]=A
-    sesRun "whoami"                   # run in A
-    sesClose --id A
-    sesClose --id B
+    sessionOpen --id A
+    sessionOpen --id B
+    sessionRun --id A "whoami"
+    sessionRun --id B "whoami"
+    sessionRun "whoami"                   # run in B as it was the last one used
+    sessionID=A                           # equal to sessionID[0]=A
+    sessionRun "whoami"                   # run in A
+    sessionClose --id A
+    sessionClose --id B
 
 Run command on remote machines
 
-      sesOpen --id server
-      sesOpen --id client
+      sessionOpen --id server
+      sessionOpen --id client
     # note, we need to let ssh execution to timeout as the ssh command actually
     # does not finish, it will stay waiting for the password and the remote prompt
-      sesRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
-      sesExpect "[Pp]assword"
-      sesSend "PASSWORD"$'\r'
-      sesRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
-      sesExpect "[Pp]assword"
-      sesSend "PASSWORD"$'\r'
+      sessionRun --id server --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@server.example.com"
+      sessionExpect "[Pp]assword"
+      sessionSend "PASSWORD"$'\r'
+      sessionRun --id client --timeout 1 "ssh UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@client.example.com"
+      sessionExpect "[Pp]assword"
+      sessionSend "PASSWORD"$'\r'
     # check we are on the remote
-      rlRun -s 'sesRun --id server "hostname -f"'
+      rlRun -s 'sessionRun --id server "hostname -f"'
       rlAssertGrep 'server.example.com' $rlRun_LOG
       rm -f $rlRun_LOG
-      rlRun -s 'sesRun --id client "hostname -f"'
+      rlRun -s 'sessionRun --id client "hostname -f"'
       rlAssertGrep 'client.example.com' $rlRun_LOG
       rm -f $rlRun_LOG
     # optionally exit from ssh connections
     # note, we need to let this execution to timeout as well as we are basically
     # returning from the remote prompt to the local prompt - the one from
     # the previousely timed out ssh execution
-    # alternatively one could do this by issuing sesSend "exit"$'\r'
-      sesRun --id server --timeout 1 "exit"
-      sesRun --id client --timeout 1 "exit"
-      sesClose --id server
-      sesClose --id client
+    # alternatively one could do this by issuing sessionSend "exit"$'\r'
+      sessionRun --id server --timeout 1 "exit"
+      sessionRun --id client --timeout 1 "exit"
+      sessionClose --id server
+      sessionClose --id client
 
 # FILES
 
-- `ses.tcl`
+- `session.tcl`
 
     The daemon forked to handle each session.
 

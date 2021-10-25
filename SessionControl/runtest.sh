@@ -38,21 +38,21 @@ rlJournalStart
   rlPhaseEnd; }
 
   rlPhaseStartTest && {
-    sesOpen
-    rlRun "sesRun 'false'" 1
-    rlRun "sesRun 'true'" 0
-    rlRun "sesRun '(exit 5)'" 5
-    rlRun -s 'sesRun "id"'
+    sessionOpen
+    rlRun "sessionRun 'false'" 1
+    rlRun "sessionRun 'true'" 0
+    rlRun "sessionRun '(exit 5)'" 5
+    rlRun -s 'sessionRun "id"'
     rlAssertGrep 'uid=0(root)' $rlRun_LOG
     rm -f $rlRun_LOG
-    rlRun "sesSend 'for i in \`seq 4\`; do echo \$i; sleep 1; done'$'\r'"
-    rlRun -s "sesExpect 'seq 4'"
+    rlRun "sessionSend 'for i in \`seq 4\`; do echo \$i; sleep 1; done'$'\r'"
+    rlRun -s "sessionExpect 'seq 4'"
     rlRun "cat $rlRun_LOG"
     rlAssertGrep 'for i in `seq 4' $rlRun_LOG
     rlAssertNotGrep 'for i in `seq 4`' $rlRun_LOG
     rm -f $rlRun_LOG
     sleep 5
-    rlRun -s "sesExpect 4"
+    rlRun -s "sessionExpect 4"
     rlRun "cat $rlRun_LOG"
     echo -en '`; do echo $i; sleep 1; done
 1
@@ -61,30 +61,30 @@ rlJournalStart
 4' > tmp
     rlRun  "diff -u tmp $rlRun_LOG"
     rm -f $rlRun_LOG
-    rlRun -s 'sesRun "id"'
+    rlRun -s 'sessionRun "id"'
     rlAssertGrep 'uid=0(root)' $rlRun_LOG
     rm -f $rlRun_LOG
-    rlRun -s "sesRun 'for i in \`seq 4\`; do echo -n \$i,; sleep 1; done; echo'"
+    rlRun -s "sessionRun 'for i in \`seq 4\`; do echo -n \$i,; sleep 1; done; echo'"
     rlRun "cat $rlRun_LOG"
     echo -en '1,2,3,4,\n' > tmp
     rlRun "diff -u tmp $rlRun_LOG"
     rm -f $rlRun_LOG
-    rlRun -s "sesRun 'for i in \`seq 4\`; do echo -n \$i,; sleep 1; done'"
+    rlRun -s "sessionRun 'for i in \`seq 4\`; do echo -n \$i,; sleep 1; done'"
     rlRun "cat $rlRun_LOG"
     echo -en "1,2,3,4," > tmp
     rlRun "diff -u tmp $rlRun_LOG"
     rm -f $rlRun_LOG tmp
-    rlRun "sesRun --timeout 1 'sleep 2'" 254
-    rlRun "sesRun 'sleep 2'"
-    sesRunTIMEOUT=1
-    rlRun "sesRun 'sleep 2'" 254
-    unset sesRunTIMEOUT
-    rlRun "sesRun 'sleep 2'"
-    sesClose
+    rlRun "sessionRun --timeout 1 'sleep 2'" 254
+    rlRun "sessionRun 'sleep 2'"
+    sessionRunTIMEOUT=1
+    rlRun "sessionRun 'sleep 2'" 254
+    unset sessionRunTIMEOUT
+    rlRun "sessionRun 'sleep 2'"
+    sessionClose
   rlPhaseEnd; }
 
   rlPhaseStartCleanup && {
-    sesCleanup
+    sessionCleanup
     rlRun "popd"
     rlRun 'rm -r $TmpDir' 0 'Removing tmp directory'
   rlPhaseEnd; }
