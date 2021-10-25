@@ -186,7 +186,7 @@ sessionRun() {
     set fd_res [open "$sessionDir/result" w]
     set fd_out [open "$sessionDir/output" w]
     send "\\r"
-    send {export PS1="(\\\$?:$rand)> [\\u@\\h]\\\$([[ \\\$UID -eq 0 ]] && echo '#' || echo '\$') " PROMPT_COMMAND=''}; send "\\r"
+    send {export PS1="(\\\$?:$rand)> [\\u@\\h]\\\$([[ \\\$UID -eq 0 ]] && echo '#' || echo '\$') "; unset PROMPT_COMMAND; bind 'set enable-bracketed-paste off'}; send "\\r"
     expect -re {\\([0-9]+:${rand}\\)> }
     send "\\r"
     expect -re {\\([0-9]+:${rand}\\)> }
