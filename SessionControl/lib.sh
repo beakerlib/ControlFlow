@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = session
-#   library-version = 1
+#   library-version = 2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_session_LIB_NAME="SessionControl"
-__INTERNAL_session_LIB_VERSION=1
+__INTERNAL_session_LIB_VERSION=2
 
 : <<'=cut'
 =pod
@@ -186,7 +186,7 @@ sessionRun() {
     set fd_res [open "$sessionDir/result" w]
     set fd_out [open "$sessionDir/output" w]
     send "\\r"
-    send {export PS1="(\\\$?:$rand)> [\\u@\\h]\\\$([[ \\\$UID -eq 0 ]] && echo '#' || echo '\$') "; unset PROMPT_COMMAND; bind 'set enable-bracketed-paste off'}; send "\\r"
+    send {__INTERNAL_session_lastEC=\$?; export PS1="(\\\$?:$rand)> [\\u@\\h]\\\$([[ \\\$UID -eq 0 ]] && echo '#' || echo '\$') "; unset PROMPT_COMMAND; bind 'set enable-bracketed-paste off'; (exit \$__INTERNAL_session_lastEC)}; send "\\r"
     expect -re {\\([0-9]+:${rand}\\)> }
     send "\\r"
     expect -re {\\([0-9]+:${rand}\\)> }
