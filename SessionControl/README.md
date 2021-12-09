@@ -116,6 +116,20 @@ Similarly to an `expect` script, send an _INPUT_ to the **sessionID\[0\]** sessi
 
 Returns **0** if successful.
 
+## sessionWaitAPrompt
+
+Wait a prompt to appear in the **sessionID\[0\]** session.
+
+    sessionWaitAPrompt [options]
+
+### options
+
+- **--id** _ID_
+
+    If provided the **sessionID\[0\]** will be set to _ID_.
+
+Returns **0** if successful.
+
 ## sessionRaw
 
 Send raw expect code the session handling daemon.

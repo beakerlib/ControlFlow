@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = session
-#   library-version = 2
+#   library-version = 3
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_session_LIB_NAME="SessionControl"
-__INTERNAL_session_LIB_VERSION=2
+__INTERNAL_session_LIB_VERSION=3
 
 : <<'=cut'
 =pod
@@ -120,10 +120,7 @@ sessionOpen() {
   disown $sessionPID
   echo $sessionPID > "$sessionDir/pid"
   rlLogInfo "sessionID=$sessionID"
-  sessionRaw - << EOF
-    set buf {}
-    set printed_length 0
-EOF
+  sessionRun "true"
 }
 
 
@@ -369,6 +366,34 @@ sessionSend() {
     send {$command}
 EOF
   #[[ $? -ne 0 ]] && return 1
+}
+
+
+: <<'=cut'
+=pod
+
+=head2 sessionWaitAPrompt
+
+Wait a prompt to appear in the B<sessionID[0]> session.
+
+    sessionWaitAPrompt [options]
+
+=head3 options
+
+=over
+
+=item B<--id> I<ID>
+
+If provided the B<sessionID[0]> will be set to I<ID>.
+
+=back
+
+Returns B<0> if successful.
+
+=cut
+
+sessionWaitAPrompt() {
+  sessionExpect "$@" '\([0-9]+:[0-9]+\)> '
 }
 
 
