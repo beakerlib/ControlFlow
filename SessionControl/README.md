@@ -71,7 +71,7 @@ Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-c
 Similarly to an `expect` script, wait for a _REG\_EXP_ pattern appearence
 in the **sessionID\[0\]** session.
 
-    sessionExpect [options] REG_EXP
+    sessionExpect [options] [regexp_switches] REG_EXP
 
 ### options
 
@@ -84,6 +84,13 @@ in the **sessionID\[0\]** session.
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
     Defaults to **120** seconds or **sessionExpectTIMEOUT**, if set.
+
+### regexp\_switches
+
+- -_switch_
+
+    An option starting with single dash (-) is considered to be a switch to tcl's
+    regexp. See [https://www.tcl.tk/man/tcl8.5/TclCmd/regexp.html#M4](https://www.tcl.tk/man/tcl8.5/TclCmd/regexp.html#M4).
 
 - _REG\_EXP_
 

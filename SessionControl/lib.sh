@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = session
-#   library-version = 4
+#   library-version = 5
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_session_LIB_NAME="SessionControl"
-__INTERNAL_session_LIB_VERSION=4
+__INTERNAL_session_LIB_VERSION=5
 
 : <<'=cut'
 =pod
@@ -228,7 +228,7 @@ EOF
 Similarly to an C<expect> script, wait for a I<REG_EXP> pattern appearence
 in the B<sessionID[0]> session.
 
-    sessionExpect [options] REG_EXP
+    sessionExpect [options] [regexp_switches] REG_EXP
 
 =head3 options
 
@@ -244,6 +244,17 @@ The command execution time will be limitted to I<TIMEOUT> second(s).
 
 Defaults to B<120> seconds or B<sessionExpectTIMEOUT>, if set.
 
+=back
+
+=head3 regexp_switches
+
+=over
+
+=item -I<switch>
+
+An option starting with single dash (-) is considered to be a switch to tcl's
+regexp. See L<https://www.tcl.tk/man/tcl8.5/TclCmd/regexp.html#M4>.
+
 =item I<REG_EXP>
 
 The pattern to be awaited in the session output.
@@ -256,24 +267,29 @@ I<STDOUT> continuously.
 Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 
 =cut
+#'
 
 sessionExpect() {
-  local timeout=${sessionExpectTIMEOUT:-120} switches
-  while [[ "${1:0:2}" == '--' ]]; do
+  local timeout=${sessionExpectTIMEOUT:-120} regexp_switches
+  while [[ "${1:0:1}" == '-' ]]; do
     case "$1" in
       "--id")
         sessionID="$2"
-        shift 2
+        shift
         ;;
       "--timeout")
         timeout="$2"
-        shift 2
+        shift
         ;;
-      "--switches")
-        switches="$2"
-        shift 2
+      -start)
+        regexp_switches+=" $1 $2"
+        shift
+        ;;
+      -*)
+        regexp_switches+=" $1"
         ;;
     esac
+    shift
   done
   local sessionDir="$__INTERNAL_sessionDir/$sessionID"
   local pattern="$1"
@@ -286,7 +302,7 @@ sessionExpect() {
     # process buffer by regexp matching
     proc process {{el ""}} {
       set res 1
-      if { [uplevel {regexp $switches -- {(^.*?$pattern)} "\$buf" {} prev}] } {
+      if { [uplevel {regexp $regexp_switches -- {(^.*?$pattern)} "\$buf" {} prev}] } {
         uplevel {
           puts -nonewline \$fd_out "[string map {\\r\\n \\n} [string range "\$prev" \$printed_length end]]"
           flush \$fd_out

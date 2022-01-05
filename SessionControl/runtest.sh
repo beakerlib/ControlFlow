@@ -84,8 +84,24 @@ rlJournalStart
     sessionWaitAPrompt
     sessionSend 'for (( i=0; i<=10; i++)); do echo -en "\na$i"; sleep 1; done; sleep 5'$'\r'
     rlRun 'sessionExpect --timeout 6 "a5"'
-    rlRun 'sessionExpect --timeout 6 --switches "-nocase" "a10"'
+    rlRun 'DEBUG=1 sessionExpect --timeout 6 -nocase "a10"'
     sessionWaitAPrompt
+    rlLog "send enter"
+    rlRun 'sessionRun "(exit 5)"' 5
+    rlRun "sessionRun '(exit \$?)'" 5
+    rlRun "sessionSend '(exit 4)"$'\r'"'"
+    sessionWaitAPrompt; sessionWaitAPrompt
+    rlRun "sessionRun '(exit \$?)'" 4
+    rlRun 'sessionSend "(exit 3)'$'\r''"'
+    sessionWaitAPrompt; sessionWaitAPrompt
+    rlRun "sessionRun '(exit \$?)'" 3
+    rlRun 'sessionSend "(exit 6)"'; sessionSend $'\r'
+    sessionWaitAPrompt; sessionWaitAPrompt
+    rlRun "sessionRun '(exit \$?)'" 6
+    rlRun 'sessionSend "(exit 7)
+"'
+    sessionWaitAPrompt; sessionWaitAPrompt
+    rlRun "sessionRun '(exit \$?)'" 7
     sessionClose
   rlPhaseEnd; }
 
