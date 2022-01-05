@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = session
-#   library-version = 3
+#   library-version = 4
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_session_LIB_NAME="SessionControl"
-__INTERNAL_session_LIB_VERSION=3
+__INTERNAL_session_LIB_VERSION=4
 
 : <<'=cut'
 =pod
@@ -258,7 +258,7 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 =cut
 
 sessionExpect() {
-  local timeout=${sessionExpectTIMEOUT:-120}
+  local timeout=${sessionExpectTIMEOUT:-120} switches
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
       "--id")
@@ -267,6 +267,10 @@ sessionExpect() {
         ;;
       "--timeout")
         timeout="$2"
+        shift 2
+        ;;
+      "--switches")
+        switches="$2"
         shift 2
         ;;
     esac
@@ -282,7 +286,7 @@ sessionExpect() {
     # process buffer by regexp matching
     proc process {{el ""}} {
       set res 1
-      if { [uplevel {regexp {(^.*?$pattern)} "\$buf" {} prev}] } {
+      if { [uplevel {regexp $switches -- {(^.*?$pattern)} "\$buf" {} prev}] } {
         uplevel {
           puts -nonewline \$fd_out "[string map {\\r\\n \\n} [string range "\$prev" \$printed_length end]]"
           flush \$fd_out

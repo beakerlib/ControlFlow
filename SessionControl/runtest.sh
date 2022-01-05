@@ -80,6 +80,12 @@ rlJournalStart
     rlRun "sessionRun 'sleep 2'" 254
     unset sessionRunTIMEOUT
     rlRun "sessionRun 'sleep 2'"
+    rlLog "check regexp switches"
+    sessionWaitAPrompt
+    sessionSend 'for (( i=0; i<=10; i++)); do echo -en "\na$i"; sleep 1; done; sleep 5'$'\r'
+    rlRun 'sessionExpect --timeout 6 "a5"'
+    rlRun 'sessionExpect --timeout 6 --switches "-nocase" "a10"'
+    sessionWaitAPrompt
     sessionClose
   rlPhaseEnd; }
 
