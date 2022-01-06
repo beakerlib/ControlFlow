@@ -81,7 +81,6 @@ rlJournalStart
     unset sessionRunTIMEOUT
     rlRun "sessionRun 'sleep 2'"
     rlLog "check regexp switches"
-    sessionWaitAPrompt
     sessionSend 'for (( i=0; i<=10; i++)); do echo -en "\na$i"; sleep 1; done; sleep 5'$'\r'
     rlRun 'sessionExpect --timeout 6 "a5"'
     rlRun 'DEBUG=1 sessionExpect --timeout 6 -nocase "a10"'
@@ -90,18 +89,20 @@ rlJournalStart
     rlRun 'sessionRun "(exit 5)"' 5
     rlRun "sessionRun '(exit \$?)'" 5
     rlRun "sessionSend '(exit 4)"$'\r'"'"
-    sessionWaitAPrompt; sessionWaitAPrompt
+    sessionWaitAPrompt
     rlRun "sessionRun '(exit \$?)'" 4
     rlRun 'sessionSend "(exit 3)'$'\r''"'
-    sessionWaitAPrompt; sessionWaitAPrompt
+    sessionWaitAPrompt
     rlRun "sessionRun '(exit \$?)'" 3
     rlRun 'sessionSend "(exit 6)"'; sessionSend $'\r'
-    sessionWaitAPrompt; sessionWaitAPrompt
+    sessionWaitAPrompt
     rlRun "sessionRun '(exit \$?)'" 6
     rlRun 'sessionSend "(exit 7)
 "'
-    sessionWaitAPrompt; sessionWaitAPrompt
+    sessionWaitAPrompt
     rlRun "sessionRun '(exit \$?)'" 7
+    rlLog "check very log command output"
+    rlRun "sessionRun 'for (( i=0; i<50000; i++ )); do echo \"line \$i\"; done'"
     sessionClose
   rlPhaseEnd; }
 

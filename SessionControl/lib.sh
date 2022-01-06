@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = session
-#   library-version = 5
+#   library-version = 6
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_session_LIB_NAME="SessionControl"
-__INTERNAL_session_LIB_VERSION=5
+__INTERNAL_session_LIB_VERSION=6
 
 : <<'=cut'
 =pod
@@ -197,10 +197,10 @@ sessionRun() {
       eof { puts EOF; close \$fd_out; puts \$fd_res 255; close \$fd_res; exit 255; }
       -re {.+\$} {
         append buf "\${expect_out(buffer)}"
-        if { [regexp {(.*?)\\(([0-9]+):${rand}\\)> } "\$buf" {} prev EC] } {
+        if { [regexp {(.*?)(\\(([0-9]+):${rand}\\)> )} "\$buf" {} prev prmpt EC] } {
           puts -nonewline \$fd_out "[string map {\\r\\n \\n} [string range "\$prev" \$printed_length end]]"
           flush \$fd_out
-          set buf "[string range "\$buf" [string length "\$prev"] end]"
+          set buf "[string range "\$buf" [expr [string length "\$prev"] + [string length "\$prmpt"]] end]"
           set printed_length 0
         } else {
           puts -nonewline \$fd_out "[string map {\\r\\n \\n} \${expect_out(buffer)}]"
