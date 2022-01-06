@@ -197,7 +197,7 @@ sessionRun() {
       eof { puts EOF; close \$fd_out; puts \$fd_res 255; close \$fd_res; exit 255; }
       -re {.+\$} {
         append buf "\${expect_out(buffer)}"
-        if { [regexp {(.*?)(\\(([0-9]+):${rand}\\)> )} "\$buf" {} prev prmpt EC] } {
+        if { [regexp {(.*?)(\\(([0-9]+):${rand}\\)> )} [string range "\$buf" [expr [string length "\$buf"] - 4096] end] {} prev prmpt EC] } {
           puts -nonewline \$fd_out "[string map {\\r\\n \\n} [string range "\$prev" \$printed_length end]]"
           flush \$fd_out
           set buf "[string range "\$buf" [expr [string length "\$prev"] + [string length "\$prmpt"]] end]"
@@ -302,7 +302,7 @@ sessionExpect() {
     # process buffer by regexp matching
     proc process {{el ""}} {
       set res 1
-      if { [uplevel {regexp $regexp_switches -- {(^.*?$pattern)} "\$buf" {} prev}] } {
+      if { [uplevel {regexp $regexp_switches -- {(^.*?$pattern)} [string range "\$buf" [expr [string length "\$buf"] - 4096] end] {} prev}] } {
         uplevel {
           puts -nonewline \$fd_out "[string map {\\r\\n \\n} [string range "\$prev" \$printed_length end]]"
           flush \$fd_out
