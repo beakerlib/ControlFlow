@@ -10,6 +10,11 @@ set output_socket [lindex $argv 2]
 
 spawn -noecho $session_prog
 
+expect_after {
+  eof { puts EOF; exit 255 }
+  timeout { puts TIMEOUT; exit 254 }
+}
+
 set fd_input [open "$::input_socket" "RDONLY NONBLOCK"]
 
 while {1} {
