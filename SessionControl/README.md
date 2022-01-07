@@ -147,13 +147,21 @@ Wait a prompt to appear in the **sessionID\[0\]** session.
 
     If provided the **sessionID\[0\]** will be set to _ID_.
 
+- **--timeout** _TIMEOUT_
+
+    The command execution time will be limitted to _TIMEOUT_ second(s).
+
+    Defaults to **120** seconds or **sessionExpectTIMEOUT**, if set.
+
+Note, it may be necessary to send an _enter_ (e.g. sessionSend $'\\r') first.
+
 Returns **0** if successful.
 
 ## sessionRaw
 
 Send raw expect code the session handling daemon.
 
-    sessionRaw [options] CODE
+    sessionRaw [options] [--] CODE
 
 ### options
 
@@ -166,6 +174,10 @@ Send raw expect code the session handling daemon.
     The code to be executed in the session handling expect daemon.
 
     If `-` is passed, the code will be read from _STDIN_.
+
+- --
+
+    Optional explicit end of options. This is useful if the _CODE_ starts with dashes (-).
 
 Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-code) for more details.
 

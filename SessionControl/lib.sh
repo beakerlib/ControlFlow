@@ -429,7 +429,15 @@ Wait a prompt to appear in the B<sessionID[0]> session.
 
 If provided the B<sessionID[0]> will be set to I<ID>.
 
+=item B<--timeout> I<TIMEOUT>
+
+The command execution time will be limitted to I<TIMEOUT> second(s).
+
+Defaults to B<120> seconds or B<sessionExpectTIMEOUT>, if set.
+
 =back
+
+Note, it may be necessary to send an I<enter> (e.g. sessionSend $'\r') first.
 
 Returns B<0> if successful.
 
