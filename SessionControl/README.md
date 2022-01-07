@@ -43,7 +43,7 @@ Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-c
 
 Run a command in the **sessionID\[0\]** session.
 
-    sessionRun [options] COMMAND
+    sessionRun [options] [--] COMMAND
 
 ### options
 
@@ -56,6 +56,10 @@ Run a command in the **sessionID\[0\]** session.
     The command execution time will be limitted to _TIMEOUT_ second(s).
 
     Defaults to _infinity_ (**-1**) or **sessionRunTIMEOUT**, if set.
+
+- --
+
+    Optional explicit end of options. This is useful if the command starts with dashes (-).
 
 - _COMMAND_
 
@@ -71,7 +75,7 @@ Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-c
 Similarly to an `expect` script, wait for a _REG\_EXP_ pattern appearence
 in the **sessionID\[0\]** session.
 
-    sessionExpect [options] [regexp_switches] REG_EXP
+    sessionExpect [options] [regexp_switches] [--] REG_EXP
 
 ### options
 
@@ -92,6 +96,10 @@ in the **sessionID\[0\]** session.
     An option starting with single dash (-) is considered to be a switch to tcl's
     regexp. See [https://www.tcl.tk/man/tcl8.5/TclCmd/regexp.html#M4](https://www.tcl.tk/man/tcl8.5/TclCmd/regexp.html#M4).
 
+- --
+
+    Optional explicit end of options. This is useful if the regexp starts with dashes (-).
+
 - _REG\_EXP_
 
     The pattern to be awaited in the session output.
@@ -105,7 +113,7 @@ Returns **0** if successful. See section ["COMMON RESULT CODE"](#common-result-c
 
 Similarly to an `expect` script, send an _INPUT_ to the **sessionID\[0\]** session.
 
-    sessionSend [options] INPUT
+    sessionSend [options] [--] INPUT
 
 ### options
 
@@ -120,6 +128,10 @@ Similarly to an `expect` script, send an _INPUT_ to the **sessionID\[0\]** sessi
 
     Note, to execute a command using `sessionSend` you need to append **\\r** to confirm
     it on the prompt.
+
+- --
+
+    Optional explicit end of options. This is useful if the input starts with dashes (-).
 
 Returns **0** if successful.
 

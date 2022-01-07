@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = session
-#   library-version = 6
+#   library-version = 7
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_session_LIB_NAME="SessionControl"
-__INTERNAL_session_LIB_VERSION=6
+__INTERNAL_session_LIB_VERSION=7
 
 : <<'=cut'
 =pod
@@ -131,7 +131,7 @@ sessionOpen() {
 
 Run a command in the B<sessionID[0]> session.
 
-    sessionRun [options] COMMAND
+    sessionRun [options] [--] COMMAND
 
 =head3 options
 
@@ -147,6 +147,9 @@ The command execution time will be limitted to I<TIMEOUT> second(s).
 
 Defaults to I<infinity> (B<-1>) or B<sessionRunTIMEOUT>, if set.
 
+=item --
+
+Optional explicit end of options. This is useful if the command starts with dashes (-).
 
 =item I<COMMAND>
 
@@ -165,6 +168,10 @@ sessionRun() {
   local timeout=${sessionRunTIMEOUT:--1}
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
+      "--")
+        shift
+        break
+        ;;
       "--id")
         sessionID="$2"
         shift 2
@@ -228,7 +235,7 @@ EOF
 Similarly to an C<expect> script, wait for a I<REG_EXP> pattern appearence
 in the B<sessionID[0]> session.
 
-    sessionExpect [options] [regexp_switches] REG_EXP
+    sessionExpect [options] [regexp_switches] [--] REG_EXP
 
 =head3 options
 
@@ -255,6 +262,10 @@ Defaults to B<120> seconds or B<sessionExpectTIMEOUT>, if set.
 An option starting with single dash (-) is considered to be a switch to tcl's
 regexp. See L<https://www.tcl.tk/man/tcl8.5/TclCmd/regexp.html#M4>.
 
+=item --
+
+Optional explicit end of options. This is useful if the regexp starts with dashes (-).
+
 =item I<REG_EXP>
 
 The pattern to be awaited in the session output.
@@ -273,6 +284,10 @@ sessionExpect() {
   local timeout=${sessionExpectTIMEOUT:-120} regexp_switches
   while [[ "${1:0:1}" == '-' ]]; do
     case "$1" in
+      "--")
+        shift
+        break
+        ;;
       "--id")
         sessionID="$2"
         shift
@@ -347,7 +362,7 @@ EOF
 
 Similarly to an C<expect> script, send an I<INPUT> to the B<sessionID[0]> session.
 
-    sessionSend [options] INPUT
+    sessionSend [options] [--] INPUT
 
 =head3 options
 
@@ -365,6 +380,10 @@ e.g. B<\003> to send break (^C).
 Note, to execute a command using C<sessionSend> you need to append B<\r> to confirm
 it on the prompt.
 
+=item --
+
+Optional explicit end of options. This is useful if the input starts with dashes (-).
+
 =back
 
 Returns B<0> if successful.
@@ -374,6 +393,10 @@ Returns B<0> if successful.
 sessionSend() {
   while [[ "${1:0:2}" == '--' ]]; do
     case "$1" in
+      "--")
+        shift
+        break
+        ;;
       "--id")
         sessionID="$2"
         shift 2
@@ -424,7 +447,7 @@ sessionWaitAPrompt() {
 
 Send raw expect code the session handling daemon.
 
-    sessionRaw [options] CODE
+    sessionRaw [options] [--] CODE
 
 =head3 options
 
@@ -440,6 +463,10 @@ The code to be executed in the session handling expect daemon.
 
 If C<-> is passed, the code will be read from I<STDIN>.
 
+=item --
+
+Optional explicit end of options. This is useful if the I<CODE> starts with dashes (-).
+
 =back
 
 Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
@@ -447,10 +474,18 @@ Returns B<0> if successful. See section L</COMMON RESULT CODE> for more details.
 =cut
 
 sessionRaw() {
-  [[ "$1" == "--id" ]] && {
-    sessionID="$2"
-    shift 2
-  }
+  while [[ "${1:0:2}" == '--' ]]; do
+    case "$1" in
+      "--")
+        shift
+        break
+        ;;
+      "--id")
+        sessionID="$2"
+        shift 2
+        ;;
+    esac
+  done
   local command="$1"
   local sessionDir="$__INTERNAL_sessionDir/$sessionID"
   kill -n 0 "$(<$sessionDir/pid)" > /dev/null 2>&1 || {
@@ -495,7 +530,6 @@ sessionClose() {
     sessionID="$2"
     shift 2
   }
-  local command="$1"
   local sessionDir="$__INTERNAL_sessionDir/$sessionID"
   kill -n 0 "$(<$sessionDir/pid)" > /dev/null 2>&1 || {
     rlLogInfo "session $ID is not open"
