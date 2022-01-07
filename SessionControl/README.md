@@ -85,7 +85,7 @@ in the **sessionID\[0\]** session.
 
     Defaults to **120** seconds or **sessionExpectTIMEOUT**, if set.
 
-### regexp\_switches
+#### regexp\_switches
 
 - -_switch_
 

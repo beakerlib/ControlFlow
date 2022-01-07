@@ -246,7 +246,7 @@ Defaults to B<120> seconds or B<sessionExpectTIMEOUT>, if set.
 
 =back
 
-=head3 regexp_switches
+=head4 regexp_switches
 
 =over
 
