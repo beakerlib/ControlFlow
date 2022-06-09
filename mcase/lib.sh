@@ -185,13 +185,6 @@
 #     IN_PLACE_UPGRADE variable is `old`, and `test`, `diag` and `cleanup`
 #     if the value is `new` (upgraded distro).
 #
-#  *  `morf_upg` - if d/mcase detects that your test is running under
-#     upgrade mode of the MORF framework (upgrade test), it will consult
-#     MORF to decide which handlers to run.
-#
-#     Normally this will mean `setup`, `test`, `diag` on source distro,
-#     and `test`, `diag` and `cleanup` on destination (upgraded) distro.
-#
 #
 # =head1 PERSISTENCE AND WORKING DIRECTORY
 #
@@ -890,16 +883,8 @@ __distribution_mcase__select_workflow_auto() {
     # Automatically detect a particular workflow
     #
     #shellcheck disable=SC2154
-    case $morf__stage in
-        src|dst)
-            rlImport 'distribution/upgrade'
-            echo morf_upg
-            return 0
-            ;;
-    esac
     case $IN_PLACE_UPGRADE in
         old|new)
-            rlImport 'distribution/upgrade'
             echo tmt_upgrade
             return 0
             ;;
@@ -984,28 +969,15 @@ __distribution_mcase__w_basic() {
 }
 
 __distribution_mcase__w_tmt_upgrade() {
-    if distribution_upgrade__at_src; then
+    if test "$IN_PLACE_UPGRADE" == "old"; then
         echo setup
         echo test
         echo diag
-    elif distribution_upgrade__at_dst; then
+    elif test "$IN_PLACE_UPGRADE" == "new"; then
         echo test
         echo diag
     else
         __distribution_mcase__error "invalid tmt_upgrade call; stage not applicable"
-    fi
-}
-
-__distribution_mcase__w_morf_upg() {
-    if distribution_upgrade__at_src; then
-        echo setup
-        echo test
-        echo diag
-    elif distribution_upgrade__at_dst; then
-        echo test
-        echo diag
-    else
-        __distribution_mcase__error "invalid morf call; stage not applicable"
     fi
 }
 
@@ -1215,13 +1187,6 @@ to one of following values:
     Normally this will mean `setup`, `test`, `diag` if the value of
     IN_PLACE_UPGRADE variable is `old`, and `test`, `diag` and `cleanup`
     if the value is `new` (upgraded distro).
-
- *  `morf_upg` - if d/mcase detects that your test is running under
-    upgrade mode of the MORF framework (upgrade test), it will consult
-    MORF to decide which handlers to run.
-
-    Normally this will mean `setup`, `test`, `diag` on source distro,
-    and `test`, `diag` and `cleanup` on destination (upgraded) distro.
 
 
 =head1 PERSISTENCE AND WORKING DIRECTORY
