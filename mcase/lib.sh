@@ -2,7 +2,6 @@
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   lib.sh of /CoreOS/distribution/Library/mcase
 #   Description: Modal test code
 #   Author: Alois Mahdal <amahdal@redhat.com>
 #
@@ -105,7 +104,7 @@
 #     rlJournalStart
 #
 #         rlPhaseStartSetup
-#             rlImport distribution/mcase
+#             rlImport ControlFlow/mcase
 #         rlPhaseEnd
 #
 #         distribution_mcase__run
@@ -115,7 +114,7 @@
 #
 # Notice:
 #
-#  *  The same test without distribution/mcase would require lot of
+#  *  The same test without ControlFLow/mcase would require lot of
 #     rlPhase*() calls.
 #
 #  *  The setup is now responsive to situations when something is terribly
@@ -133,10 +132,10 @@
 #     cleanup
 #
 # In various circumstances, it may be useful to tweak the order.  With
-# distribution/mcase, you can have the runner function run handlers in
+# ControlFlow/mcase, you can have the runner function run handlers in
 # any order without need touch the test code, using *workflows*.
 #
-# With distribution/mcase, you can alter the order:
+# With ControlFlow/mcase, you can alter the order:
 #
 #  *  using one of built-in workflows,
 #  *  providing your own workflow.
@@ -1055,7 +1054,7 @@ true <<'=cut'
 
 =head1 NAME
 
-distribution/mcase - Modal test case
+ControlFlow/mcase - Modal test case
 
 =head1 DESCRIPTION
 
@@ -1146,7 +1145,7 @@ Here's what you need to do:
 
 Notice:
 
- *  The same test without distribution/mcase would require lot of
+ *  The same test without ControlFlow/mcase would require lot of
     rlPhase*() calls.
 
  *  The setup is now responsive to situations when something is terribly
@@ -1164,10 +1163,10 @@ By default, (`basic` workflow) handlers are called in this order:
     cleanup
 
 In various circumstances, it may be useful to tweak the order.  With
-distribution/mcase, you can have the runner function run handlers in
+ControlFlow/mcase, you can have the runner function run handlers in
 any order without need touch the test code, using *workflows*.
 
-With distribution/mcase, you can alter the order:
+With ControlFlow/mcase, you can alter the order:
 
  *  using one of built-in workflows,
  *  providing your own workflow.

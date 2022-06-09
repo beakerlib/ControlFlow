@@ -2,7 +2,6 @@
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   runtest.sh of /CoreOS/distribution/Library/mcase
 #   Description: Modal test code
 #   Author: Alois Mahdal <amahdal@redhat.com>
 #
@@ -31,7 +30,7 @@
 
 rlJournalStart
     rlPhaseStartSetup
-        rlRun "rlImport distribution/mcase"
+        rlRun "rlImport ControlFlow/mcase"
     rlPhaseEnd
 
     rlPhaseStartTest
