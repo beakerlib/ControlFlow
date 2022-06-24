@@ -1107,7 +1107,7 @@ Here's what you need to do:
     rlJournalStart
 
         rlPhaseStartSetup
-            rlImport distribution/mcase
+            rlImport ControlFlow/mcase
         rlPhaseEnd
 
         distribution_mcase__run
