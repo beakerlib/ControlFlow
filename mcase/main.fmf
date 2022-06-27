@@ -3,5 +3,4 @@ contact:
  - mmacura@redhat.com
  - mkluson@redhat.com
 author: amahdal@redhat.com
-test: ./runtest.sh
 framework: beakerlib
