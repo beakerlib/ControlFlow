@@ -1,0 +1,6 @@
+summary: modal test case library
+contact:
+ - mmacura@redhat.com
+ - mkluson@redhat.com
+author: amahdal@redhat.com
+framework: beakerlib
