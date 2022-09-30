@@ -1,6 +1,5 @@
 #!/bin/bash
-# Authors: 	Dalibor Pospíšil	<dapospis@redhat.com>
-#   Author: Dalibor Pospisil <dapospis@redhat.com>
+# Authors: Dalibor Pospíšil <dapospis@redhat.com>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -22,9 +21,9 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = Cleanup
-#   library-version = 10
+#   library-version = 11
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-__INTERNAL_Cleanup_LIB_VERSION=10
+__INTERNAL_Cleanup_LIB_VERSION=11
 : <<'=cut'
 =pod
 
@@ -41,49 +40,49 @@ This file contains functions which provides cleanup stack functionality.
 To use this functionality you need to import library distribution/Cleanup and add
 following line to Makefile.
 
-	@echo "RhtsRequires:    library(distribution/Cleanup)" >> $(METADATA)
+    @echo "RhtsRequires:    library(distribution/Cleanup)" >> $(METADATA)
 
 B<Code example>
 
-	rlJournalStart
-	  rlPhaseStartSetup
-	    rlImport 'distribution/Cleanup'
-	    tmp=$(mktemp)
-	    CleanupRegister "
-	      rlLog 'Removing data'
-	      rlRun \"rm -f ${tmp}\"
-	    "
-	    rlLog 'Creating some data'
-	    rlRun "echo 'asdfalkjh' > $tmp"
+    rlJournalStart
+      rlPhaseStartSetup
+        rlImport 'distribution/Cleanup'
+        tmp=$(mktemp)
+        CleanupRegister "
+          rlLog 'Removing data'
+          rlRun \"rm -f ${tmp}\"
+        "
+        rlLog 'Creating some data'
+        rlRun "echo 'asdfalkjh' > $tmp"
 
-	    CleanupRegister "
-	      rlLog 'just something to demonstrate unregistering'
-	    "
-	    ID1=$CleanupRegisterID
-	    CleanupUnregister $ID1
+        CleanupRegister "
+          rlLog 'just something to demonstrate unregistering'
+        "
+        ID1=$CleanupRegisterID
+        CleanupUnregister $ID1
 
-	    CleanupRegister "
-	      rlLog 'just something to demonstrate partial cleanup'
-	    "
-	    ID2=$CleanupRegisterID
-	    CleanupRegister "rlLog 'cleanup some more things'"
-	    # cleanup everything upto ID2
-	    CleanupDo $ID2
+        CleanupRegister "
+          rlLog 'just something to demonstrate partial cleanup'
+        "
+        ID2=$CleanupRegisterID
+        CleanupRegister "rlLog 'cleanup some more things'"
+        # cleanup everything upto ID2
+        CleanupDo $ID2
 
-	    CleanupRegister --mark "
-	      rlLog 'yet another something to demonstrate partial cleanup using internal ID saving'
-	    "
-	    CleanupRegister "rlLog 'cleanup some more things'"
-	    # cleanup everything upto last mark
-	    CleanupDo --mark
-	  rlPhaseEnd
+        CleanupRegister --mark "
+          rlLog 'yet another something to demonstrate partial cleanup using internal ID saving'
+        "
+        CleanupRegister "rlLog 'cleanup some more things'"
+        # cleanup everything upto last mark
+        CleanupDo --mark
+      rlPhaseEnd
 
-	  rlPhaseStartCleanup
-	    CleanupDo
-	  rlPhaseEnd
+      rlPhaseStartCleanup
+        CleanupDo
+      rlPhaseEnd
 
-	  rlJournalPrintText
-	rlJournalEnd
+      rlJournalPrintText
+    rlJournalEnd
 
 =head1 FUNCTIONS
 
@@ -92,8 +91,9 @@ B<Code example>
 echo -n "loading library Cleanup v$__INTERNAL_Cleanup_LIB_VERSION... "
 
 __INTERNAL_Cleanup_stack_file="$BEAKERLIB_DIR/Cleanup_stack"
-touch "$__INTERNAL_Cleanup_stack_file"
-chmod ug+rw "$__INTERNAL_Cleanup_stack_file"
+__INTERNAL_Cleanup_stack_file_mark="$BEAKERLIB_DIR/Cleanup_stack_mark"
+touch "$__INTERNAL_Cleanup_stack_file" "$__INTERNAL_Cleanup_stack_file_mark"
+chmod ug+rw "$__INTERNAL_Cleanup_stack_file" "$__INTERNAL_Cleanup_stack_file_mark"
 
 # CleanupRegister ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {{{
 # CleanupRegister [--mark] CLEANUP_CODE
@@ -111,7 +111,7 @@ CleanupRegister() {
   CleanupRegisterID="${RANDOM}$(date +"%s%N")"
   echo -n "Registering cleanup ID=$CleanupRegisterID" >&2
   if [[ $mark -eq 1 ]]; then
-    __INTERNAL_CleanupMark=( "$CleanupRegisterID" "${__INTERNAL_CleanupMark[@]}" )
+    echo "$CleanupRegisterID" >> "$__INTERNAL_Cleanup_stack_file_mark"
     echo -n " with mark" >&2
   fi
   echo " '$1'" >&2
@@ -222,10 +222,13 @@ CleanupDo() {
     return 1
   }
   if [[ "$ID" == "mark" || "$ID" == "--mark" ]]; then
+    local __INTERNAL_CleanupMark
+    __INTERNAL_CleanupMark=$(tail -n 1 "$__INTERNAL_Cleanup_stack_file_mark")
     echo "execute cleanup upto mark='$__INTERNAL_CleanupMark'" >&2
     __INTERNAL_Cleanup_get_stack_part "-$__INTERNAL_CleanupMark" | grep -v "^# ID='" > "$tmp"
     newstack="$(__INTERNAL_Cleanup_get_stack_part "-$__INTERNAL_CleanupMark" 'rest')"
-    __INTERNAL_CleanupMark=("${__INTERNAL_CleanupMark[@]:1}")
+    __INTERNAL_CleanupMark=$(head -n -1 "$__INTERNAL_Cleanup_stack_file_mark")
+    echo "$__INTERNAL_CleanupMark" > "$__INTERNAL_Cleanup_stack_file_mark"
   elif [[ -n "$ID" ]]; then
     echo "execute cleanup for ID='$ID'" >&2
     __INTERNAL_Cleanup_get_stack_part "$ID" | grep -v "^# ID='" > "$tmp"
@@ -244,7 +247,7 @@ CleanupDo() {
   }
   rm -f "$tmp"
   echo "cleanup execution done" >&2
-  if [[ -z "$ID" ]]; then 
+  if [[ -z "$ID" ]]; then
     trap - SIGINT
   fi
   if ! CleanupSetStack "$newstack"; then
@@ -324,4 +327,3 @@ Dalibor Pospisil <dapospis@redhat.com>
 =back
 
 =cut
-
