@@ -976,6 +976,7 @@ __distribution_mcase__w_tmt_upgrade() {
     elif test "$IN_PLACE_UPGRADE" == "new"; then
         echo test
         echo diag
+        echo cleanup
     else
         __distribution_mcase__error "invalid tmt_upgrade call; stage not applicable"
     fi
