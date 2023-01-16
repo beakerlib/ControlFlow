@@ -3,8 +3,8 @@ contact: Dalibor Pospíšil <dapospis@redhat.com>
 test: ./runtest.sh
 framework: beakerlib
 require:
-- /usr/bin/expect
-- /usr/bin/bash
+- expect
+- bash
 duration: 5m
 enabled: true
 extra-nitrate: TC#0611933

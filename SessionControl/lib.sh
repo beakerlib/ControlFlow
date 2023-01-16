@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = session
-#   library-version = 7
+#   library-version = 8
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_session_LIB_NAME="SessionControl"
-__INTERNAL_session_LIB_VERSION=7
+__INTERNAL_session_LIB_VERSION=8
 
 : <<'=cut'
 =pod
