@@ -976,7 +976,6 @@ __distribution_mcase__w_tmt_upgrade() {
     elif test "$IN_PLACE_UPGRADE" == "new"; then
         echo test
         echo diag
-        echo cleanup
     else
         __distribution_mcase__error "invalid tmt_upgrade call; stage not applicable"
     fi
@@ -1186,8 +1185,12 @@ to one of following values:
     will consult IN_PLACE_UPGRADE to decide which handlers to run.
 
     Normally this will mean `setup`, `test`, `diag` if the value of
-    IN_PLACE_UPGRADE variable is `old`, and `test`, `diag` and `cleanup`
+    IN_PLACE_UPGRADE variable is `old`, and `test` and  `diag`
     if the value is `new` (upgraded distro).
+    'Cleanup' phase of the test is not executed post-upgrade. If the test
+    relies on beakerlib functions to preserve states using eg
+    rlServiceStart/rlServiceRestore or rlFileBackup/rlFileRestore
+    those are not available after reboot, which causes the test to fail.
 
 
 =head1 PERSISTENCE AND WORKING DIRECTORY
