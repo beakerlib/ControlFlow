@@ -1,0 +1,33 @@
+summary: A multihost synchronization library 
+description: ''
+contact: Dalibor Pospisil <dapospis@redhat.com>
+test: ./runtest.sh
+framework: beakerlib
+require:
+  - bind-utils
+recommend:
+  - wget
+  - curl
+  - python
+  - platform-python
+duration: 5m
+enabled: true
+
+
+# plan for testing the library
+provision:
+  - how: minute
+    image: fedora
+    role: server
+  - how: minute
+    image: fedora
+    role: client
+  - how: minute
+    image: fedora
+    role: controller
+discover:
+  - how: fmf
+    test:
+      - /sync
+execute:
+  - how: tmt

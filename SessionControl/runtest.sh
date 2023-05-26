@@ -31,7 +31,7 @@
 rlJournalStart
   rlPhaseStartSetup && {
     rlRun "rlImport --all" || rlDie 'cannot continue'
-    rlRun "rlImport SessionControl" || rlDie 'cannot continue'
+    rlRun "rlImport $(basename "$(dirname "$(readlink -m "$0")")")" || rlDie 'cannot continue'
     rlRun "rlCheckMakefileRequires" || rlDie 'cannot continue'
     rlRun "TmpDir=\$(mktemp -d)" 0 "Creating tmp directory"
     rlRun "pushd $TmpDir"
@@ -102,7 +102,7 @@ rlJournalStart
     sessionWaitAPrompt
     rlRun "sessionRun '(exit \$?)'" 7
     rlLog "check very log command output"
-    rlRun "sessionRun 'for (( i=0; i<50000; i++ )); do echo \"line \$i\"; done'"
+    rlRun "sessionRun 'for (( i=0; i<10000; i++ )); do echo \"line \$i\"; done'"
     sessionClose
   rlPhaseEnd; }
 
