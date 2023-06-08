@@ -722,7 +722,7 @@ syncLibraryLoaded() {
   syncHostIP=()
   syncHostIPv6=()
   local role host syncHostServerRoleIndex syncHostServerRoleIndex i
-  [[ ${#syncHostRole[@]} -eq 1 ]] && {
+  [[ ${#syncHostRole[@]} -eq 0 ]] && {
     # if no TMT roles found use the legacy CLIENTS and SERVERS variables to populate them
     for host in $CLIENTS; do
       syncHostRole+=( "CLIENT" )
