@@ -714,7 +714,7 @@ syncLibraryLoaded() {
   fi
 
   # gather TMT information about roles
-  [[ -n "$TMT_TOPOLOGY_BASH" && -s "$TMT_TOPOLOGY_BASH" ]] && . $TMT_TOPOLOGY_BASH
+  [[ -n "$TMT_TOPOLOGY_BASH" && -s "$TMT_TOPOLOGY_BASH" ]] && . "$TMT_TOPOLOGY_BASH"
   syncHostRole=( $TMT_ROLE_NAMES )
   syncHostHostname=()
   syncHostIP=()
@@ -841,6 +841,8 @@ syncLibraryLoaded() {
     done
   else
     rlLogError "${__syncLogPrefix}: Cannot determined communication sides!"
+    declare -p syncHostRole syncHostHostname syncHostIP syncHostIPv6
+    cat "$TMT_TOPOLOGY_BASH"
     return 1
   fi
 
