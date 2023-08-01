@@ -28,7 +28,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = sync
-#   library-version = 1
+#   library-version = 2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Synchronization counter.
@@ -714,10 +714,8 @@ syncLibraryLoaded() {
   fi
 
   # gather TMT information about roles
-  syncHostRole=()
-  while IFS= read -r line; do
-    syncHostRole+=( "$line" )
-  done < <(declare -p | grep -Eo ' TMT_ROLE_[^=]+=' | sed -r 's/^.{10}//;s/.$//')
+  [[ -n "$TMT_TOPOLOGY_BASH" && -s "$TMT_TOPOLOGY_BASH" ]] && . $TMT_TOPOLOGY_BASH
+  syncHostRole=( $TMT_ROLE_NAMES )
   syncHostHostname=()
   syncHostIP=()
   syncHostIPv6=()
@@ -745,8 +743,9 @@ syncLibraryLoaded() {
     esac
     [[ -z "${syncHostHostname[i]}" ]] && {
       # if the hostnames are not know yet, set them from TMT data
-      role="TMT_ROLE_${syncHostRole[i]}"
-      syncHostHostname[i]="${!role}"
+      # TMT_ROLES[server]="default-0"
+      # TMT_GUESTS[default-0.hostname]
+      syncHostHostname[i]="${TMT_GUESTS[${TMT_ROLES[${syncHostRole[i]}]}.hostname]}"
     }
     host="${syncHostHostname[i]}"
 

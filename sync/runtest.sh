@@ -7,6 +7,10 @@
 
 rlJournalStart
   rlPhaseStartSetup
+    . $TMT_TOPOLOGY_BASH
+    rlRun "env"
+    rlRun "env | grep -i ^tmt_"
+    rlRun "cat $TMT_TOPOLOGY_BASH"
     rlRun "rlImport ." || rlDie "cannot continue"
   rlPhaseEnd
 
