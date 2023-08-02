@@ -28,7 +28,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = sync
-#   library-version = 2
+#   library-version = 3
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Synchronization counter.
@@ -174,7 +174,7 @@ of the test is not yet reached).
 # read-only / read-write remounting if needed.
 
 __syncSHARE="/var/tmp/syncMultihost"
-syncProvider="http"
+syncProvider="ncat"
 
 __syncWget() {
   local QUIET CONNREFUSED
@@ -199,11 +199,17 @@ __syncWget() {
 
 __syncDownload() {
   __syncFoundOnHost="${1/|*}"
+  local flag
+  flag="${1#*|}"
+  rlLogDebug "${FUNCNAME[0]}(): downloading flag $flag raised by host $__syncFoundOnHost using $syncProvider provider"
   if [[ "$syncProvider" =~ http ]]; then
-    local flag
-    flag="${1#*|}"
-    rlLogDebug "${FUNCNAME[0]}(): downloading flag $flag raised by host $__syncFoundOnHost"
     __syncWget --quiet - "http://$__syncFoundOnHost:$syncPort/$flag"
+  elif [[ "$syncProvider" =~ ncat ]]; then
+    if [[ -n "$DEBUG" ]]; then
+      echo "$flag" | nc --no-shutdown "$__syncFoundOnHost" "$syncPort" | tee /dev/fd/2
+    else
+      echo "$flag" | nc --no-shutdown "$__syncFoundOnHost" "$syncPort" 2> /dev/null
+    fi
   fi
 }
 
@@ -215,11 +221,15 @@ __syncList() {
     hosts=( "$@" )
   fi
   for host in "${hosts[@]}"; do
-    rlLogDebug "${FUNCNAME[0]}(): listing flags raised by host $host"
+    rlLogDebug "${FUNCNAME[0]}(): listing flags raised by host $host using $syncProvider provider"
     if [[ "$syncProvider" =~ http ]]; then
       __syncWget --quiet - "http://$host:$syncPort/flags.txt" | sed -r "s/^/${host}|/"
     elif [[ "$syncProvider" =~ ncat ]]; then
-      ncat --recv-only "$host" "$syncPort"
+      if [[ -n "$DEBUG" ]]; then
+        echo flags.txt | nc --no-shutdown "$host" "$syncPort" | sed -r "s/^/${host}|/" | tee /dev/fd/2
+      else
+        echo flags.txt | nc --no-shutdown "$host" "$syncPort" | sed -r "s/^/${host}|/" 2> /dev/null
+      fi
     fi
   done
 }
@@ -246,19 +256,21 @@ __syncSet() {
   res=0
   flag_name="$1"
   flag_file="${__syncSHARE}/${syncTEST}/${flag_name}"
-  [[ "$syncProvider" =~ http ]] && {
-    rlLogDebug "${FUNCNAME[0]}(): make sure the path is available"
-    mkdir -p "${__syncSHARE}/${syncTEST}" || ((res++))
 
-    rlLogDebug "${FUNCNAME[0]}(): create the flag file temporary file"
-    cat - > "${flag_file}.partial" || ((res++))
+  rlLogDebug "${FUNCNAME[0]}(): make sure the path is available"
+  mkdir -p "${__syncSHARE}/${syncTEST}" || ((res++))
 
-    rlLogDebug "${FUNCNAME[0]}(): move to the final flag file"
-    mv -f "${flag_file}.partial" "${flag_file}" || ((res++))
-  }
+  rlLogDebug "${FUNCNAME[0]}(): create the flag file temporary file"
+  cat - > "${flag_file}.partial" || ((res++))
+
+  rlLogDebug "${FUNCNAME[0]}(): move to the final flag file"
+  mv -f "${flag_file}.partial" "${flag_file}" || ((res++))
+
   rlLogDebug "${FUNCNAME[0]}(): populate a list of flag names"
   echo "${syncTEST}/${flag_name}" >> "$__syncSHARE/flags.txt" || ((res++))
-  systemctl restart syncHelper
+  [[ "$syncProvider" =~ http ]] && systemctl start syncHelper
+
+  return $res
 }
 
 __syncInstallNcatHelperService() {
@@ -269,8 +281,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/ncat -l -k -e '/usr/bin/cat $__syncSHARE/__FLAGS' --send-only $syncPort
-TimeoutStopSec=5
+ExecStart=/usr/bin/nc -k -l $syncPort -c 'read -r line; cat "$__syncSHARE/\$line"'
 Restart=always
 RestartSec=5s
 
@@ -303,9 +314,10 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=$helper_script
-TimeoutStopSec=5
 Restart=always
 RestartSec=5s
+StartLimitIntervalSec=1
+StartLimitBurst=100
 
 [Install]
 WantedBy=default.target
@@ -314,7 +326,11 @@ EOF
 
 __syncInstallHelperService() {
   mkdir -p "$__syncSHARE"
-  __syncInstallHttpHelperService
+  if [[ "$syncProvider" =~ http ]]; then
+    __syncInstallHttpHelperService
+  elif [[ "$syncProvider" =~ ncat ]]; then
+    __syncInstallNcatHelperService
+  fi
   local zones
   if zones=$(firewall-cmd --get-zones 2> /dev/null); then
   for zone in $zones; do
@@ -430,6 +446,7 @@ syncSynchronize() {
   syncSet "SYNC_${syncCOUNT}" || let res++
   local host
   # wait for all others to raise their flags as well
+  rlLogDebug "$FUNCNAME(): check hosts ${syncOTHER[*]}"
   for host in "${syncOTHER[@]}"; do
     syncExp "SYNC_${syncCOUNT}" "${host}" || let res++
   done

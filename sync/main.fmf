@@ -5,11 +5,7 @@ test: ./runtest.sh
 framework: beakerlib
 require:
   - bind-utils
-recommend:
-  - wget
-  - curl
-  - python
-  - platform-python
+  - nmap-ncat
 duration: 5m
 enabled: true
 
@@ -19,12 +15,15 @@ provision:
   - how: minute
     image: fedora
     role: server
+    name: server
   - how: minute
     image: fedora
     role: client
+    name: client
   - how: minute
     image: fedora
     role: controller
+    name: controller
 discover:
   - how: fmf
     test:
