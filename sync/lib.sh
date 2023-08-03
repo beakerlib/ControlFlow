@@ -674,11 +674,12 @@ Returns 0 if all the other sides passed.
 syncResults() {
   local resultFlag="__syncMutualResults__"
   syncSet "$resultFlag" "$(rlGetTestState; echo $?)" || let res++
-  local host
+  local host res
   # wait for all others to raise their flags as well
   for host in "${syncOTHER[@]}"; do
-    [[ "$(syncExp "$resultFlag" "${host}")" == "0" ]] || let res++
+    [[ "$(syncExp "$resultFlag" "${host}")" == "0" ]] || { let res++; break; }
   done
+  return $res
 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
