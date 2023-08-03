@@ -8,6 +8,9 @@ require:
   - nmap-ncat
 duration: 5m
 enabled: true
+adjust:
+  - when: distro <= rhel-6, centos-6
+    enabled: false
 
 
 # plan for testing the library
