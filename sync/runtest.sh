@@ -14,6 +14,10 @@ rlJournalStart
     rlRun "rlImport ." || rlDie "cannot continue"
   rlPhaseEnd
 
+  rlPhaseStartTest "omni-directional sync"
+    rlRun "DEBUG=1 syncSynchronize"
+  rlPhaseEnd
+
   rlPhaseStartTest "pure flag"
     syncIsServer && rlRun "DEBUG=1 syncSet test1"
     syncIsClient && rlRun "DEBUG=1 syncExp test1"
@@ -33,10 +37,6 @@ rlJournalStart
       rlRun -s "DEBUG=1 syncExp test3"
       rlAssertGrep 'test message2' $rlRun_LOG
     }
-  rlPhaseEnd
-
-  rlPhaseStartTest "omni-directional sync"
-    rlRun "DEBUG=1 syncSynchronize"
   rlPhaseEnd
 
   rlPhaseStartTest "the other side result"
