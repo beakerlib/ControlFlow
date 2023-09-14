@@ -12,6 +12,7 @@ rlJournalStart
     rlRun "env | grep -i ^tmt_"
     rlRun "cat $TMT_TOPOLOGY_BASH"
     rlRun "rlImport ." || rlDie "cannot continue"
+    declare -p syncHostRole syncHostName syncHostHostname syncHost syncHostIP syncHostIPv6
   rlPhaseEnd
 
   rlPhaseStartTest "omni-directional sync"

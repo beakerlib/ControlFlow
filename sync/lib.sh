@@ -4,9 +4,7 @@
 #
 #   lib.sh of /distribution/Library/sync
 #   Description: A multihost synchronization library
-#   Authors: Ondrej Moris <omoris@redhat.com>
-#            Dalibor Pospisil <dapospis@redhat.com>
-#            Jaroslav Aster <jaster@redhat.com>
+#   Authors: Dalibor Pospisil <dapospis@redhat.com>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -28,14 +26,14 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = sync
-#   library-version = 3
+#   library-version = 4
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Synchronization counter.
 syncCOUNT=0
 
 # Pattern for valid filename representing flag.
-syncFLAG_PATTERN="^[A-Za-z0-9_-]*$"
+syncFLAG_PATTERN="a-zA-Z0-9._-"
 
 # Logging prefix.
 __syncLogPrefix="sync"
@@ -132,10 +130,15 @@ over IPv6 address.
 IPv6 address of the SERVER. If the SERVER has no IPv6 address of
 a global scope, syncSERVERv6 is empty.
 
+=item syncNAME (set automatically)
+
+A name in a mutual communication played by the actual machine, e.g.
+CLIENT or SERVER.
+
 =item syncROLE (set automatically)
 
-A role in a mutual communication played by the actual machine - 
-either CLIENT or SERVER.
+A role in a mutual communication played by the actual machine, e.g.
+CLIENT or SERVER.
 
 =item syncTEST (set automatically)
 
@@ -174,62 +177,38 @@ of the test is not yet reached).
 # read-only / read-write remounting if needed.
 
 __syncSHARE="/var/tmp/syncMultihost"
-syncProvider="ncat"
-
-__syncWget() {
-  local QUIET CONNREFUSED
-  [[ "$1" == "--quiet" ]] && { QUIET=1; shift; }
-  local FILE="$1"
-  local URL="$2"
-  local res=0
-  if command -v curl > /dev/null; then
-    rlLogDebug "${FUNCNAME[0]}(): using curl for download of $URL"
-    CONNREFUSED="--retry-connrefused"
-    curl --help | grep -q -- $CONNREFUSED || CONNREFUSED=''
-    curl --fail ${QUIET:+"--silent"} --location $CONNREFUSED --retry-delay 3 --retry-max-time 5 --retry 3 --connect-timeout 5 --max-time 5 --insecure -o "$FILE" "$URL" || let res++
-  elif command -v wget > /dev/null; then
-    rlLogDebug "${FUNCNAME[0]}(): using wget for download"
-    wget ${QUIET:+"--quiet"} -t 3 -T 5 -w 5 --waitretry=3 --no-check-certificate --progress=dot:giga -O "$FILE" "$URL" || let res++
-  else
-    rlLogError "${FUNCNAME[0]}(): no tool for downloading web content is available"
-    let res++
-  fi
-  return $res
+[[ -n "$TMT_PLAN_DATA" ]] && {
+  __syncSHARE="$TMT_PLAN_DATA/../execute/data/syncMultihost"
 }
 
 __syncDownload() {
-  __syncFoundOnHost="${1/|*}"
+  [[ "$1" =~ ([^ ]+)\ (([^/]*)/.*) ]] || return 1
+  __syncFoundOnHost="${BASH_REMATCH[1]}"
+  __syncFoundRaisedByHost="${BASH_REMATCH[3]}"
   local flag
-  flag="${1#*|}"
-  rlLogDebug "${FUNCNAME[0]}(): downloading flag $flag raised by host $__syncFoundOnHost using $syncProvider provider"
-  if [[ "$syncProvider" =~ http ]]; then
-    __syncWget --quiet - "http://$__syncFoundOnHost:$syncPort/$flag"
-  elif [[ "$syncProvider" =~ ncat ]]; then
-    if [[ -n "$DEBUG" ]]; then
-      echo "$flag" | nc --no-shutdown "$__syncFoundOnHost" "$syncPort" | tee /dev/fd/2
-    else
-      echo "$flag" | nc --no-shutdown "$__syncFoundOnHost" "$syncPort" 2> /dev/null
-    fi
+  flag="${BASH_REMATCH[2]}"
+  rlLogDebug "${FUNCNAME[0]}(): downloading flag $flag raised by $__syncFoundRaisedByHost from host $__syncFoundOnHost"
+  if [[ -n "$DEBUG" ]]; then
+    echo -e "get\n$flag" | nc --no-shutdown "$__syncFoundOnHost" "$syncPort" | tee /dev/stderr
+  else
+    echo -e "get\n$flag" | nc --no-shutdown "$__syncFoundOnHost" "$syncPort" 2> /dev/null
   fi
 }
 
 __syncList() {
   local host hosts
-  if [[ $# -eq 0 ]]; then
-    hosts=( "${syncOTHER[@]}" )
-  else
-    hosts=( "$@" )
-  fi
+  [[ -n "$syncServerHost" ]] && {
+    hosts=( "${syncServerHost}" )
+  } || {
+    hosts=( "${syncHostIP[@]}" )
+  }
+
   for host in "${hosts[@]}"; do
-    rlLogDebug "${FUNCNAME[0]}(): listing flags raised by host $host using $syncProvider provider"
-    if [[ "$syncProvider" =~ http ]]; then
-      __syncWget --quiet - "http://$host:$syncPort/flags.txt" | sed -r "s/^/${host}|/"
-    elif [[ "$syncProvider" =~ ncat ]]; then
-      if [[ -n "$DEBUG" ]]; then
-        echo flags.txt | nc --no-shutdown "$host" "$syncPort" | sed -r "s/^/${host}|/" | tee /dev/fd/2
-      else
-        echo flags.txt | nc --no-shutdown "$host" "$syncPort" | sed -r "s/^/${host}|/" 2> /dev/null
-      fi
+    rlLogDebug "${FUNCNAME[0]}(): listing flags published on host $host"
+    if [[ -n "$DEBUG" ]]; then
+      echo "list" | nc --no-shutdown "$host" "$syncPort" | sed -r "s/^/$host /" | tee /dev/stderr
+    else
+      echo "list" | nc --no-shutdown "$host" "$syncPort" | sed -r "s/^/$host /" 2> /dev/null
     fi
   done
 }
@@ -239,12 +218,22 @@ __syncGet() {
     rlLogError "${__syncLogPrefix}: Missing flag specification!"
     return 2
   fi
-  local flag="$1"
+  local flag host i
+  flag="$1"
   shift
+  host=''
+  while [[ -n "$1" ]]; do
+    host+="|$1"
+    shift
+  done
+  [[ -z "$host" ]] && for i in "${syncOTHER[@]}"; do
+    host+="|$i"
+  done
+  host="(${host:1})"
 
-  rlLogDebug "${FUNCNAME[0]}(): $syncROLE is checking the flag $flag"
+  rlLogDebug "${FUNCNAME[0]}(): $syncNAME is checking the flag $flag on hosts $host"
   local rc=0 found
-  found=$(__syncList "$@" | grep -m1 "|${syncTEST}/${flag}$" ) \
+  found=$(__syncList | grep -Em1 " ${host}/${syncXTRA}_${syncTEST}/${flag}$" ) \
     && __syncDownload "${found}" \
       || rc=1
 
@@ -252,23 +241,29 @@ __syncGet() {
 }
 
 __syncSet() {
-  local flag_name flag_file res
+  local flag_name flag_file res flag_file
   res=0
   flag_name="$1"
-  flag_file="${__syncSHARE}/${syncTEST}/${flag_name}"
+  flag_file="${syncME}/${syncXTRA}_${syncTEST}/${flag_name}"
+  flag_path="${__syncSHARE}/${flag_file}"
 
-  rlLogDebug "${FUNCNAME[0]}(): make sure the path is available"
-  mkdir -p "${__syncSHARE}/${syncTEST}" || ((res++))
+  if [[ -z "$syncServerHost" ]]; then
+    # distributed flags publishing
+    rlLogDebug "${FUNCNAME[0]}(): make sure the path is available"
+    mkdir -p "$(dirname "$flag_path")" || ((res++))
 
-  rlLogDebug "${FUNCNAME[0]}(): create the flag file temporary file"
-  cat - > "${flag_file}.partial" || ((res++))
+    rlLogDebug "${FUNCNAME[0]}(): create the flag file temporary file"
+    cat - > "${flag_path}.partial" || ((res++))
 
-  rlLogDebug "${FUNCNAME[0]}(): move to the final flag file"
-  mv -f "${flag_file}.partial" "${flag_file}" || ((res++))
-
-  rlLogDebug "${FUNCNAME[0]}(): populate a list of flag names"
-  echo "${syncTEST}/${flag_name}" >> "$__syncSHARE/flags.txt" || ((res++))
-  [[ "$syncProvider" =~ http ]] && systemctl start syncHelper
+    rlLogDebug "${FUNCNAME[0]}(): move to the final flag file"
+    mv -f "${flag_path}.partial" "${flag_path}" || ((res++))
+  else
+    # centralized flags publishing on syncServerHost
+    (
+      echo -e "put\n${flag_file}"
+      cat -
+    ) | nc "$syncServerHost" "$syncPort"
+  fi
 
   return $res
 }
@@ -281,43 +276,25 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/nc -k -l $syncPort -c 'read -r line; cat "$__syncSHARE/\$line"'
+ExecStart=/usr/bin/nc -k -l $syncPort -c '\
+  read -r line; \
+  if [[ "\$line" == "list" ]]; then \
+    find "$__syncSHARE" -mindepth 2 -type f | sed -r "s#$__syncSHARE/##"; \
+  elif [[ "\$line" == "get" ]]; then \
+    read -r flag \
+    && cat "$__syncSHARE/\$flag"; \
+  elif [[ "\$line" == "put" ]]; then \
+    read -r flag \
+    && mkdir -p "$__syncSHARE/\$(dirname "\$flag")" \
+    && cat - > "$__syncSHARE/\$flag.partial" \
+    && mv -f "$__syncSHARE/\$flag.partial" "$__syncSHARE/\$flag"; \
+  else \
+    echo "unknown request"; \
+  fi \
+'
+
 Restart=always
 RestartSec=5s
-
-[Install]
-WantedBy=default.target
-EOF
-}
-
-__syncInstallHttpHelperService() {
-  local helper_script=/usr/local/bin/syncHelper
-  local PYTHON
-  if [[ -x /usr/libexec/platform-python ]]; then
-      PYTHON="/usr/libexec/platform-python -m http.server"
-  elif command -v python3; then
-      PYTHON="$(command -v python3) -m http.server"
-  else
-      PYTHON="$(command -v python) -m SimpleHTTPServer"
-  fi
-  cat > $helper_script <<EOF
-#!/bin/bash
-cd $__syncSHARE
-$PYTHON $syncPort
-EOF
-  chmod a+x $helper_script
-  cat > /etc/systemd/system/syncHelper.service <<EOF
-[Unit]
-Description=a multihost http synchronization helper service
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=$helper_script
-Restart=always
-RestartSec=5s
-StartLimitIntervalSec=1
-StartLimitBurst=100
 
 [Install]
 WantedBy=default.target
@@ -325,23 +302,20 @@ EOF
 }
 
 __syncInstallHelperService() {
+  rlLogDebug "$FUNCNAME(): installing syncHelper service"
   mkdir -p "$__syncSHARE"
-  if [[ "$syncProvider" =~ http ]]; then
-    __syncInstallHttpHelperService
-  elif [[ "$syncProvider" =~ ncat ]]; then
-    __syncInstallNcatHelperService
-  fi
+  __syncInstallNcatHelperService
   local zones
   if zones=$(firewall-cmd --get-zones 2> /dev/null); then
-  for zone in $zones; do
+    for zone in $zones; do
       firewall-cmd --zone="$zone" --add-port=2134/tcp
-  done
+    done
   elif zones=$(firewall-offline-cmd --get-zones 2> /dev/null); then
-  for zone in $zones; do
-      firewall-offline-cmd --zone="$"zone --add-port=2134/tcp > /dev/null 2>&1
-  done
+    for zone in $zones; do
+      firewall-offline-cmd --zone="$zone" --add-port=2134/tcp > /dev/null 2>&1
+    done
   else
-  rlLogInfo "could not update firewall settings"
+    rlLogInfo "could not update firewall settings"
   fi
   systemctl enable syncHelper
   systemctl restart syncHelper
@@ -421,9 +395,11 @@ phase as the last sync function.
 =cut
 
 syncCleanup() {
-  rlLogInfo "${__syncLogPrefix}: $syncROLE clears all its data"
-  rm -rf ${__syncSHARE:?}/* /tmp/syncBreak /tmp/syncSet
-  touch ${__syncSHARE:?}/flags.txt
+  [[ -n "${__syncSHARE}" && -e "${__syncSHARE}" ]] && {
+    rlLogInfo "${__syncLogPrefix}: $syncNAME clears all its data older than 2 days"
+    find "${__syncSHARE}" -mindepth 1 -ctime +1 -delete
+  }
+  rm -rf /tmp/syncBreak /tmp/syncSet
 }
 
 true <<'=cut'
@@ -443,12 +419,12 @@ syncSynchronize() {
 
   rlLogInfo "$__syncLogPrefix: Synchronizing all hosts"
   # each side raises its own flag
-  syncSet "SYNC_${syncCOUNT}" || let res++
+  syncSet "__SYNC_${syncCOUNT}__" || let res++
   local host
   # wait for all others to raise their flags as well
   rlLogDebug "$FUNCNAME(): check hosts ${syncOTHER[*]}"
   for host in "${syncOTHER[@]}"; do
-    syncExp "SYNC_${syncCOUNT}" "${host}" || let res++
+    syncExp "__SYNC_${syncCOUNT}__" "${host}" || let res++
   done
   rlLogInfo "$__syncLogPrefix: all hosts synchronized synchronized"
 
@@ -476,8 +452,8 @@ syncSet() {
     return 1
   fi
 
-  if ! [[ "$1" =~ $syncFLAG_PATTERN ]]; then
-    rlLogError "${__syncLogPrefix}: Incorrect flag (must match ${syncFLAG_PATTERN})!"
+  if ! [[ "$1" =~ ^[${syncFLAG_PATTERN}]*$ ]]; then
+    rlLogError "${__syncLogPrefix}: Incorrect flag (must match ^[${syncFLAG_PATTERN}]*$)!"
     return 2
   fi
 
@@ -490,19 +466,19 @@ syncSet() {
       rlLogError "${__syncLogPrefix}: Cannot write flag!"
       rc=3
     else
-      rlLogInfo "${__syncLogPrefix}: $syncROLE set flag $1 with a content"
+      rlLogInfo "${__syncLogPrefix}: $syncNAME set flag $1 with a content"
     fi
   elif [ -n "$2" ]; then
-    echo "$2" | __syncSet "$1"
+    echo -n "$2" | __syncSet "$1"
     if [ $? -ne 0 ]; then
       rlLogError "${__syncLogPrefix}: Cannot write flag!"
       rc=3
     else
-      rlLogInfo "${__syncLogPrefix}: $syncROLE set flag $1 with message \"$2\""
+      rlLogInfo "${__syncLogPrefix}: $syncNAME set flag $1 with message \"$2\""
     fi
   else
-    rlLogInfo "${__syncLogPrefix}: $syncROLE set flag $1"
-    echo '' | __syncSet "$1"
+    rlLogInfo "${__syncLogPrefix}: $syncNAME set flag $1"
+    echo -n '' | __syncSet "$1"
   fi
 
   return $rc
@@ -534,7 +510,7 @@ of user's permanent unblock, and 2 in case of other errors.
 #'
 
 syncExp() {
-  local rc=0
+  local rc=0 __syncFoundOnHost
   local flag="$1"
   shift
 
@@ -543,15 +519,15 @@ syncExp() {
     return 2
   fi
 
-  if ! [[ "$flag" =~ $syncFLAG_PATTERN ]]; then
-    rlLogError "${__syncLogPrefix}: Incorrect flag (must match ${syncFLAG_PATTERN})!"
+  if ! [[ "$flag" =~ ^[${syncFLAG_PATTERN}]*$ ]]; then
+    rlLogError "${__syncLogPrefix}: Incorrect flag (must match ^[${syncFLAG_PATTERN}]*$)!"
     return 2
   fi
 
   if [[ $# -eq 0 ]]; then
-    rlLogInfo "${__syncLogPrefix}: $syncROLE is waiting for flag $flag to appear on any other host"
+    rlLogInfo "${__syncLogPrefix}: $syncNAME is waiting for flag $flag raised by any other host"
   else
-    rlLogInfo "${__syncLogPrefix}: $syncROLE is waiting for flag $flag to appear on host(s): $*"
+    rlLogInfo "${__syncLogPrefix}: $syncNAME is waiting for flag $flag raised by host(s): $*"
   fi
   local file
   file="$(mktemp)"
@@ -582,24 +558,24 @@ syncExp() {
     rlLogDebug "${FUNCNAME[0]}(): did not get flag $flag, trying again"
   done
   if [ $rc -eq 0 ]; then
-    rlLogInfo "${__syncLogPrefix}: $syncROLE found flag $flag on host $__syncFoundOnHost"
+    rlLogInfo "${__syncLogPrefix}: $syncNAME found flag $flag raised by host $__syncFoundRaisedByHost on host $__syncFoundOnHost"
     if [[ -s "$matchedfile" ]]; then
       local message
       message=$(head -c 10 "$matchedfile")
       if [[ "$message" == "S_T_D_I_N:" ]]; then
-        rlLogInfo "${__syncLogPrefix}: $syncROLE got flag $flag with a content"
+        rlLogInfo "${__syncLogPrefix}: $syncNAME got flag $flag with a content"
         tail -c +11 "$matchedfile"
       else
         message=$(cat "$matchedfile")
         if [[ -z "$message" ]]; then
-          rlLogInfo "${__syncLogPrefix}: $syncROLE got pure flag $flag"
+          rlLogInfo "${__syncLogPrefix}: $syncNAME got pure flag $flag"
         else
-          rlLogInfo "${__syncLogPrefix}: $syncROLE got flag $flag with message \"$message\""
+          rlLogInfo "${__syncLogPrefix}: $syncNAME got flag $flag with message \"$message\""
         fi
         echo "$message"
       fi
     else
-      rlLogInfo "${__syncLogPrefix}: $syncROLE got flag $flag"
+      rlLogInfo "${__syncLogPrefix}: $syncNAME got flag $flag"
     fi
   fi
   rm -f "/tmp/syncSet" "$file"
@@ -627,31 +603,31 @@ syncCheck() {
     return 2
   fi
 
-  if ! [[ "$1" =~ $syncFLAG_PATTERN ]]; then
-    rlLogError "${__syncLogPrefix}: Incorrect flag (must match ${syncFLAG_PATTERN})!"
+  if ! [[ "$1" =~ ^[${syncFLAG_PATTERN}]*$ ]]; then
+    rlLogError "${__syncLogPrefix}: Incorrect flag (must match ^[${syncFLAG_PATTERN}]*$)!"
     return 2
   fi
 
   local file
   file="/tmp/syncSet"
-  rlLogInfo "${__syncLogPrefix}: $syncROLE is checking flag $1"
-  if __syncGet "$1" > "file"; then
+  rlLogInfo "${__syncLogPrefix}: $syncNAME is checking flag $1"
+  if __syncGet "$1" > "$file"; then
     if [[ -s "$file" ]]; then
       local message
       message=$(head -c 10 "$file")
       if [[ "$message" == "S_T_D_I_N:" ]]; then
-        rlLogInfo "${__syncLogPrefix}: $syncROLE got flag $1 with a content"
+        rlLogInfo "${__syncLogPrefix}: $syncNAME got flag $1 with a content"
         tail -c +11 "$file"
       else
         message=$(cat "$file")
-        rlLogInfo "${__syncLogPrefix}: $syncROLE got flag $1 with message \"$message\""
+        rlLogInfo "${__syncLogPrefix}: $syncNAME got flag $1 with message \"$message\""
         echo "$message"
       fi
     else
-      rlLogInfo "${__syncLogPrefix}: $syncROLE got flag $1"
+      rlLogInfo "${__syncLogPrefix}: $syncNAME got flag $1"
     fi
   else
-    rlLogInfo "${__syncLogPrefix}: $syncROLE did not get flag $1"
+    rlLogInfo "${__syncLogPrefix}: $syncNAME did not get flag $1"
     rc=1
   fi
   rm -f "$file"
@@ -691,6 +667,8 @@ syncResults() {
 #   returns 0 only when the library is ready to serve.
 
 syncLibraryLoaded() {
+  rlLogDebug "$__syncLogPrefix: Using $__syncSHARE folder for the sync data"
+
   # Setting defaults for optional global variables.
   [[ -z "$syncSLEEP" ]] && syncSLEEP=5
   rlLogInfo "$__syncLogPrefix: Setting syncSLEEP to $syncSLEEP seconds"
@@ -699,14 +677,21 @@ syncLibraryLoaded() {
   rlLogInfo "$__syncLogPrefix: Setting syncTIMEOUT to $syncTIMEOUT seconds"
 
   if [[ -z "$syncTEST" ]]; then
-    [[ -n "$TMT_TEST_NAME" ]] && TEST=$( echo "$TMT_TEST_NAME" | tr '/' '_' | tr ' ' '_' )
+    [[ -n "$TMT_TEST_NAME" ]] && TEST="$TMT_TEST_NAME"
     if [[ -z "$TEST" ]]; then
       # If TEST is not set via Makefile, use directory name.
       TEST=$(pwd | awk -F '/' '{print $NF}')
     fi
-    syncTEST=$( echo "$TEST" | tr '/' '_' | tr ' ' '_' )
+    syncTEST=$( echo "$TEST" | sed -r "s/[^$syncFLAG_PATTERN]/_/g;s/_+/_/g" )
     rlLogInfo "$__syncLogPrefix: Setting syncTEST to $syncTEST"
   fi
+
+  syncXTRA=$XTRA
+  if [ -z "$syncXTRA" ] && [ -n "$TMT_TREE" ] && [ -n "$TMT_TEST_SERIAL_NUMBER" ]; then
+    syncXTRA="$(echo $TMT_TREE | sed 's#^.*/run-\([0-9]*\)/.*#\1#')-$TMT_TEST_SERIAL_NUMBER"
+  fi
+
+  rlLogInfo "$__syncLogPrefix: Setting syncXTRA to $syncXTRA"
 
   # Checking that the following global variables are not set,
   # They need to be set by the library!
@@ -733,80 +718,93 @@ syncLibraryLoaded() {
 
   # gather TMT information about roles
   [[ -n "$TMT_TOPOLOGY_BASH" && -s "$TMT_TOPOLOGY_BASH" ]] && . "$TMT_TOPOLOGY_BASH"
-  syncHostRole=( $TMT_ROLE_NAMES )
+  syncHostName=( $TMT_GUEST_NAMES )
+  syncHostRole=()
   syncHostHostname=()
+  syncHost=()
   syncHostIP=()
   syncHostIPv6=()
-  local role host syncHostServerRoleIndex syncHostServerRoleIndex i
-  [[ ${#syncHostRole[@]} -eq 0 ]] && {
+  local name role host syncHostServerRoleIndex syncHostServerRoleIndex i
+  [[ ${#syncHostName[@]} -eq 0 ]] && {
     # if no TMT roles found use the legacy CLIENTS and SERVERS variables to populate them
     for host in $CLIENTS; do
       syncHostRole+=( "CLIENT" )
+      syncHostName+=( "client" )
       syncHostHostname+=( "$host" )
     done
     for host in $SERVERS; do
       syncHostRole+=( "SERVER" )
+      syncHostName+=( "server" )
       syncHostHostname+=( "$host" )
     done
   }
-  for (( i=0; i<${#syncHostRole[@]}; i++)) do
-    # find client and server in the roles
-    case ${syncHostRole[i]^^} in
-      SERVER)
-        syncHostServerRoleIndex=$i
-      ;;
-      CLIENT)
-        syncHostClientRoleIndex=$i
-      ;;
-    esac
+  for (( i=0; i<${#syncHostName[@]}; i++)) do
     [[ -z "${syncHostHostname[i]}" ]] && {
       # if the hostnames are not know yet, set them from TMT data
       # TMT_ROLES[server]="default-0"
       # TMT_GUESTS[default-0.hostname]
-      syncHostHostname[i]="${TMT_GUESTS[${TMT_ROLES[${syncHostRole[i]}]}.hostname]}"
+      syncHostHostname[i]="${TMT_GUESTS[${syncHostName[i]}.hostname]}"
+      syncHostRole[i]="${TMT_GUESTS[${syncHostName[i]}.role]}"
     }
+    name="${syncHostName[i]}"
+    role="${syncHostRole[i]}"
     host="${syncHostHostname[i]}"
+    # find client and server in the roles
+    case ,${role^^},${name^^}, in
+      *,SERVER,*)
+        syncHostServerRoleIndex=$i
+      ;;
+      *,CLIENT,*)
+        syncHostClientRoleIndex=$i
+      ;;
+    esac
 
     # collect host specific data for each host
 
     if [[ "${host}" =~ ^[0-9.]+$ ]]; then
+      syncHost[i]="${host}"
       syncHostIP[i]="${host}"
       syncHostIPv6[i]=""
-    elif [[ "${host}" =~ ^[0-9A-Fa-f.:]+$ ]]; then
-      syncHostIP[i]="${host}"
+    elif [[ "${host}" =~ ^[0-9A-Fa-f:]+$ ]]; then
+      syncHost[i]="${host}"
+      syncHostIP[i]=""
       syncHostIPv6[i]="${host}"
     else
       # try to resolve hostnames to IPs
       if getent hosts -s files "${host}"; then
-        syncHostIP[i]=$( getent hosts -s files "${host}" | awk '{print $1}' | head -1 )
+        syncHost[i]=$( getent hosts -s files "${host}" | awk '{print $1}' | head -1 )
       else
-        syncHostIP[i]=$( host "${host}" | sed 's/^.*address\s\+//' | head -1 )
+        syncHost[i]=$( host "${host}" | sed 's/^.*address\s\+//' | head -1 )
       fi
 
+      # add IPv4 if possible
+      if [[ "${syncHost[i]}" =~ ^[0-9.]+$ ]]; then
+        syncHostIP[i]="${syncHost[i]}"
       # add IPv6 if possible
-      if [[ ${syncHostIP[i]} =~ ^[0-9A-Fa-f.:]+$ ]]; then
+      elif [[ "${syncHostIP[i]}" =~ ^[0-9A-Fa-f:]+$ ]]; then
         # copy to IPv6 if already IPv6
-        syncHostIPv6[i]=${syncHostIP[i]}
+        syncHostIPv6[i]="${syncHost[i]}"
       else
         # get IPv6 as well
         syncHostIPv6[i]=$( host "${host}" | grep "IPv6" | sed 's/^.*IPv6 address\s\+//' | head -1 )
       fi
     fi
+    [[ "$syncServerName" == "${name}" ]] && syncServerHost=${syncHost[i]}
   done
 
   # reset compatibility variables
   [[ -n "$syncHostServerRoleIndex" ]] && {
     export SERVERS="${syncHostHostname[$syncHostServerRoleIndex]}"
-    export syncSERVER="${syncHostIP[$syncHostServerRoleIndex]}"
-    export syncSERVER_IP="${syncSERVER}"
+    export syncSERVER="${syncHost[$syncHostServerRoleIndex]}"
+    export syncSERVER_IP="${syncHostIP[$syncHostServerRoleIndex]}"
     export syncSERVERv6="${syncHostIPv6[$syncHostServerRoleIndex]}"
     export syncSERVER_IPv6="${syncSERVERv6}"
     export syncSERVER_HOSTNAME="${syncHostHostname[$syncHostServerRoleIndex]}"
   }
   [[ -n "$syncHostClientRoleIndex" ]] && {
     export CLIENTS="${syncHostHostname[$syncHostClientRoleIndex]}"
-    export syncCLIENT="${syncHostIP[$syncHostClientRoleIndex]}"
-    export syncCLIENT_IP="${syncCLIENT}"
+    export syncCLIENT="${syncHost[$syncHostClientRoleIndex]}"
+    export syncCLIENT_IP="${syncHostIP[$syncHostClientRoleIndex]}"
     export syncCLIENTv6="${syncHostIPv6[$syncHostClientRoleIndex]}"
     export syncCLIENT_IPv6="${syncCLIENTv6}"
     export syncCLIENT_HOSTNAME="${syncHostHostname[$syncHostClientRoleIndex]}"
@@ -829,7 +827,7 @@ syncLibraryLoaded() {
   me6="$(ip -f inet6 a s dev "${syncIFv6}" | grep 'inet6' | grep -v 'scope link' | awk '{ print $2; }' | sed 's/\/.*$//')"
   local meIndex
 
-  for (( i=0; i<${#syncHostRole[@]}; i++ )); do
+  for (( i=0; i<${#syncHostName[@]}; i++ )); do
     [[ "$me4" = "${syncHostIP[i]}" || "$me6" = "${syncHostIPv6[i]}" ]] && {
       meIndex=$i
       break
@@ -837,21 +835,23 @@ syncLibraryLoaded() {
   done
 
   if [[ -n "$meIndex" ]]; then
+    export syncNAME="${syncHostName[$meIndex]}"
     export syncROLE="${syncHostRole[$meIndex]}"
     export syncME_HOSTNAME="${syncHostHostname[$meIndex]}"
-    export syncME="${syncHostIP[$meIndex]}"
-    export syncME_IP="${syncME}"
+    export syncME="${syncHost[$meIndex]}"
+    export syncME_IP="${syncHostIP[$meIndex]}"
     export syncMEv6="${syncHostIPv6[$meIndex]}"
     export syncME_IPv6="${syncMEv6}"
     syncOTHER=()
     syncOTHER_IP=()
     syncOTHERv6=()
     syncOTHER_IPv6=()
-    for (( i=0; i<${#syncHostRole[@]}; i++ )); do
+    for (( i=0; i<${#syncHostName[@]}; i++ )); do
       [[ "$meIndex" != "$i" ]] && {
-        syncOTHER_Role+=( "${syncHostRole[i]}" )
+        syncOTHER_NAME+=( "${syncHostName[i]}" )
+        syncOTHER_ROLE+=( "${syncHostRole[i]}" )
         syncOTHER_HOSTNAME+=( "${syncHostHostname[i]}" )
-        syncOTHER+=( "${syncHostIP[i]}" )
+        syncOTHER+=( "${syncHost[i]}" )
         syncOTHER_IP+=( "${syncHostIP[i]}" )
         syncOTHERv6+=( "${syncHostIPv6[i]}" )
         syncOTHER_IPv6+=( "${syncHostIPv6[i]}" )
@@ -865,13 +865,26 @@ syncLibraryLoaded() {
   fi
 
   # Ready to go.
+  rlLogInfo "${__syncLogPrefix}: Setting syncNAME to \"${syncROLE}\""
   rlLogInfo "${__syncLogPrefix}: Setting syncROLE to \"${syncROLE}\""
   rlLogInfo "${__syncLogPrefix}: Setting syncME to \"${syncME}\""
+  rlLogInfo "${__syncLogPrefix}: Setting syncME_IP to \"${syncME_IP}\""
   rlLogInfo "${__syncLogPrefix}: Setting syncMEv6 to \"${syncMEv6}\""
+  rlLogInfo "${__syncLogPrefix}: Setting syncME_IPv6 to \"${syncME_IPv6}\""
   rlLogInfo "${__syncLogPrefix}: Setting syncME_HOSTNAME to \"${syncME_HOSTNAME}\""
-  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER to ( ${syncOTHER[*]} )"
-  rlLogInfo "${__syncLogPrefix}: Setting syncOTHERv6 to ( ${syncOTHERv6[*]} )"
-  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER_HOSTNAME to ( ${syncOTHER_HOSTNAME[*]} )"
+  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER_NAME to ( $( for i in "${syncOTHER_NAME[@]}"; do echo -n "\"$i\" "; done ))"
+  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER_ROLE to ( $( for i in "${syncOTHER_ROLE[@]}"; do echo -n "\"$i\" "; done ))"
+  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER to ( $( for i in "${syncOTHER[@]}"; do echo -n "\"$i\" "; done ))"
+  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER_IP to ( $( for i in "${syncOTHER_IP[@]}"; do echo -n "\"$i\" "; done ))"
+  rlLogInfo "${__syncLogPrefix}: Setting syncOTHERv6 to ( $( for i in "${syncOTHERv6[@]}"; do echo -n "\"$i\" "; done ))"
+  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER_IPv6 to ( $( for i in "${syncOTHER_IPv6[@]}"; do echo -n "\"$i\" "; done ))"
+  rlLogInfo "${__syncLogPrefix}: Setting syncOTHER_HOSTNAME to ( $( for i in "${syncOTHER_HOSTNAME[@]}"; do echo -n "\"$i\" "; done ))"
+  [[ -n "$syncServerHost" ]] && {
+    rlLogInfo "${__syncLogPrefix}: Running in centralized mode, all flags are published on a sync server \"${syncServerHost}\""
+  } || {
+    rlLogInfo "${__syncLogPrefix}: Running in distributed mode, each host publishes its own flags"
+  }
+
 
   # Initial storage clean-up (data related to this execution).
   syncCleanup
@@ -880,7 +893,7 @@ syncLibraryLoaded() {
   rlLogInfo "$__syncLogPrefix: CLIENT is $CLIENTS"
   rlLogInfo "$__syncLogPrefix: SERVER is $SERVERS"
   rlLogInfo ""
-  rlLogInfo "$__syncLogPrefix: I play role: $syncROLE"
+  rlLogInfo "$__syncLogPrefix: I '$syncNAME' am playing a role $syncROLE"
 
   # ping test
   __syncAvailabilityCheck() {
@@ -898,14 +911,15 @@ syncLibraryLoaded() {
   }
   rlLogInfo              "$__syncLogPrefix: availability check"
   for (( i=0; i<${#syncOTHER[@]}; i++ )); do
-    rlLogInfo            "$__syncLogPrefix:   check host ${syncOTHER[i]} (role: ${syncOTHER_Role[i]})"
+    rlLogInfo            "$__syncLogPrefix:   check host ${syncOTHER[i]} (name: ${syncOTHER_NAME[i]}, role: ${syncOTHER_ROLE[i]})"
     __syncAvailabilityCheck "${syncOTHER[i]}"          "IPv4 ........."
     __syncAvailabilityCheck "${syncOTHERv6[i]}"        "IPv6 ........."
     __syncAvailabilityCheck "${syncOTHER_HOSTNAME[i]}" "hostname ....."
   done
 
-  __syncInstallHelperService || {
-    rlLogError "$__syncLogPrefix: count not install the systemd shelper service"
+  [[ -z "$syncServerHost" || "$syncServerHost" == "$syncME" ]] && {
+    __syncInstallHelperService \
+    || rlLogError "$__syncLogPrefix: count not install the systemd shelper service"
   }
 
   return 0

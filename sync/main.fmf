@@ -14,6 +14,8 @@ adjust:
 
 
 # plan for testing the library
+environment:
+    syncServerName: server2
 provision:
   - how: minute
     image: fedora
@@ -21,6 +23,9 @@ provision:
     name: server
   - how: minute
     image: fedora
+    role: server
+    name: server2
+  - how: minute
     role: client
     name: client
   - how: minute
