@@ -26,7 +26,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = sync
-#   library-version = 5
+#   library-version = 6
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Synchronization counter.
@@ -690,7 +690,7 @@ syncLibraryLoaded() {
   if [ -z "$syncXTRA" ] && [ -n "$TMT_TREE" ] && [ -n "$TMT_TEST_SERIAL_NUMBER" ]; then
     syncXTRA="$(echo $TMT_TREE | sed 's#^.*/run-\([0-9]*\)/.*#\1#')-$TMT_TEST_SERIAL_NUMBER"
   fi
-
+  syncXTRA=$( echo "$syncXTRA" | sed -r "s/[^$syncFLAG_PATTERN]/_/g;s/_+/_/g" )
   rlLogInfo "$__syncLogPrefix: Setting syncXTRA to $syncXTRA"
 
   # Checking that the following global variables are not set,
