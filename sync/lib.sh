@@ -893,7 +893,7 @@ syncLibraryLoaded() {
   rlLogInfo "$__syncLogPrefix: CLIENT is $CLIENTS"
   rlLogInfo "$__syncLogPrefix: SERVER is $SERVERS"
   rlLogInfo ""
-  rlLogInfo "$__syncLogPrefix: I '$syncNAME' am playing a role $syncROLE"
+  rlLogInfo "$__syncLogPrefix: I '$syncNAME' am playing role $syncROLE"
 
   # ping test
   __syncAvailabilityCheck() {
