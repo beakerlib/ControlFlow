@@ -26,7 +26,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = sync
-#   library-version = 4
+#   library-version = 5
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Synchronization counter.
@@ -828,7 +828,7 @@ syncLibraryLoaded() {
   local meIndex
 
   for (( i=0; i<${#syncHostName[@]}; i++ )); do
-    [[ "$me4" = "${syncHostIP[i]}" || "$me6" = "${syncHostIPv6[i]}" ]] && {
+    [[ -n "$me4" && "$me4" = "${syncHostIP[i]}" ]] || [[ -n "$me6" && "$me6" = "${syncHostIPv6[i]}" ]] && {
       meIndex=$i
       break
     }
