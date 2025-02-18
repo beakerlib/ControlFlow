@@ -26,7 +26,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = sync
-#   library-version = 6
+#   library-version = 7
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Synchronization counter.
@@ -182,6 +182,7 @@ __syncSHARE="/var/tmp/syncMultihost"
 }
 
 __syncDownload() {
+  rlLogDebug "${FUNCNAME[0]}(): try to download flag '$1'"
   [[ "$1" =~ ([^ ]+)\ (([^/]*)/.*) ]] || return 1
   __syncFoundOnHost="${BASH_REMATCH[1]}"
   __syncFoundRaisedByHost="${BASH_REMATCH[3]}"
@@ -231,7 +232,7 @@ __syncGet() {
   done
   host="(${host:1})"
 
-  rlLogDebug "${FUNCNAME[0]}(): $syncNAME is checking the flag $flag on hosts $host"
+  rlLogDebug "${FUNCNAME[0]}(): $syncNAME is looking for flag ${host}/${syncXTRA}_${syncTEST}/${flag}"
   local rc=0 found
   found=$(__syncList | grep -Em1 " ${host}/${syncXTRA}_${syncTEST}/${flag}$" ) \
     && __syncDownload "${found}" \
