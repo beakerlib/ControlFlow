@@ -232,12 +232,21 @@ __syncGet() {
   done
   host="(${host:1})"
 
-  rlLogDebug "${FUNCNAME[0]}(): $syncNAME is looking for flag ${host}/${syncXTRA}_${syncTEST}/${flag}"
-  local rc=0 found
-  found=$(__syncList | grep -Em1 " ${host}/${syncXTRA}_${syncTEST}/${flag}$" ) \
-    && __syncDownload "${found}" \
-      || rc=1
+  rlLogDebug "${FUNCNAME[0]}(): $syncNAME is looking for flag ' ${host}/${syncXTRA}_${syncTEST}/${flag}'"
+  local rc=0 found flag_listing
+  flag_listing=$(__syncList)
+  rlLogDebug "${FUNCNAME[0]}(): got flag listing '$flag_listing'"
+  found=$(echo "$flag_listing" | grep -Em1 " ${host}/${syncXTRA}_${syncTEST}/${flag}$" ) || {
+    rlLogDebug "${FUNCNAME[0]}(): did not find the flag"
+    let rc+=01
+  }
+  rlLogDebug "${FUNCNAME[0]}(): found '$found'"
+  [[ -n "$found" && $rc -eq 0 ]] && __syncDownload "${found}" || {
+    rlLogDebug "${FUNCNAME[0]}(): failed to download the flag content"
+    let rc+=10
+  }
 
+  rlLogDebug "${FUNCNAME[0]}(): rc=$rc"
   return $rc
 }
 
