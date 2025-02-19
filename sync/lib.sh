@@ -762,10 +762,10 @@ syncLibraryLoaded() {
     # find client and server in the roles
     case ,${role^^},${name^^}, in
       *,SERVER,*)
-        syncHostServerRoleIndex=$i
+        syncHostServerRoleIndex+=( $i )
       ;;
       *,CLIENT,*)
-        syncHostClientRoleIndex=$i
+        syncHostClientRoleIndex+=( $i )
       ;;
     esac
 
@@ -804,20 +804,42 @@ syncLibraryLoaded() {
 
   # reset compatibility variables
   [[ -n "$syncHostServerRoleIndex" ]] && {
-    export SERVERS="${syncHostHostname[$syncHostServerRoleIndex]}"
-    export syncSERVER="${syncHost[$syncHostServerRoleIndex]}"
-    export syncSERVER_IP="${syncHostIP[$syncHostServerRoleIndex]}"
-    export syncSERVERv6="${syncHostIPv6[$syncHostServerRoleIndex]}"
+    SERVERS="${syncHostHostname[${syncHostServerRoleIndex[0]}]}"
+    syncSERVER="${syncHost[${syncHostServerRoleIndex[0]}]}"
+    syncSERVER_IP="${syncHostIP[${syncHostServerRoleIndex[0]}]}"
+    syncSERVERv6="${syncHostIPv6[${syncHostServerRoleIndex[0]}]}"
+    for (( i=1; i<${#syncHostServerRoleIndex[@]}; i++))
+    do
+      SERVERS="$SERVERS ${syncHostHostname[${syncHostServerRoleIndex[$i]}]}"
+      syncSERVER="$syncSERVER ${syncHost[${syncHostServerRoleIndex[$i]}]}"
+      syncSERVER_IP="$syncSERVER_IP ${syncHostIP[${syncHostServerRoleIndex[$i]}]}"
+      syncSERVERv6="$syncSERVERv6 ${syncHostIPv6[${syncHostServerRoleIndex[$i]}]}"
+    done
+    export SERVERS="$SERVERS"
+    export syncSERVER="$syncSERVER"
+    export syncSERVER_IP="$syncSERVER_IP"
+    export syncSERVERv6="$syncSERVERv6"
     export syncSERVER_IPv6="${syncSERVERv6}"
-    export syncSERVER_HOSTNAME="${syncHostHostname[$syncHostServerRoleIndex]}"
+    export syncSERVER_HOSTNAME="$SERVERS"
   }
   [[ -n "$syncHostClientRoleIndex" ]] && {
-    export CLIENTS="${syncHostHostname[$syncHostClientRoleIndex]}"
-    export syncCLIENT="${syncHost[$syncHostClientRoleIndex]}"
-    export syncCLIENT_IP="${syncHostIP[$syncHostClientRoleIndex]}"
-    export syncCLIENTv6="${syncHostIPv6[$syncHostClientRoleIndex]}"
+    CLIENTS="${syncHostHostname[${syncHostClientRoleIndex[0]}]}"
+    syncCLIENT="${syncHost[${syncHostClientRoleIndex[0]}]}"
+    syncCLIENT_IP="${syncHostIP[${syncHostClientRoleIndex[0]}]}"
+    syncCLIENTv6="${syncHostIPv6[${syncHostClientRoleIndex[0]}]}"
+    for (( i=1; i<${#syncHostClientRoleIndex[@]}; i++))
+    do
+      CLIENTS="$CLIENTS ${syncHostHostname[${syncHostClientRoleIndex[$i]}]}"
+      syncCLIENT="$syncCLIENT ${syncHost[${syncHostClientRoleIndex[$i]}]}"
+      syncCLIENT_IP="$syncCLIENT_IP ${syncHostIP[${syncHostClientRoleIndex[$i]}]}"
+      syncCLIENTv6="$syncCLIENTv6 ${syncHostIPv6[${syncHostClientRoleIndex[$i]}]}"
+    done
+    export CLIENTS="$CLIENTS"
+    export syncCLIENT="$syncCLIENT"
+    export syncCLIENT_IP="$syncCLIENT_IP"
+    export syncCLIENTv6="$syncCLIENTv6"
     export syncCLIENT_IPv6="${syncCLIENTv6}"
-    export syncCLIENT_HOSTNAME="${syncHostHostname[$syncHostClientRoleIndex]}"
+    export syncCLIENT_HOSTNAME="$CLIENTS"
   }
 
   # get default GW interface
