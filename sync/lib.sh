@@ -803,7 +803,14 @@ syncLibraryLoaded() {
   done
 
   # reset compatibility variables
+
   [[ -n "$syncHostServerRoleIndex" ]] && {
+    SERVERS=''
+    syncSERVER_HOSTNAME=()
+    syncSERVER=()
+    syncSERVER_IP=()
+    syncSERVERv6=()
+    syncSERVER_IPv6=()
     for i in "${syncHostServerRoleIndex[@]}"; do
       SERVERS+=" ${syncHostHostname[$i]}"
       syncSERVER_HOSTNAME+=( "${syncHostHostname[$i]}" )
@@ -816,6 +823,12 @@ syncLibraryLoaded() {
     export SERVERS syncSERVER syncSERVER_IP syncSERVERv6 syncSERVER_IPv6 syncSERVER_HOSTNAME
   }
   [[ -n "$syncHostClientRoleIndex" ]] && {
+    CLIENTS=''
+    syncCLIENT_HOSTNAME=()
+    syncCLIENT=()
+    syncCLIENT_IP=()
+    syncCLIENTv6=()
+    syncCLIENT_IPv6=()
     for i in "${syncHostClientRoleIndex[@]}"; do
       CLIENTS+=" ${syncHostHostname[$i]}"
       syncCLIENT_HOSTNAME+=( "${syncHostHostname[$i]}" )
