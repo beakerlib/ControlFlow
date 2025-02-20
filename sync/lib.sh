@@ -804,17 +804,14 @@ syncLibraryLoaded() {
 
   # reset compatibility variables
   [[ -n "$syncHostServerRoleIndex" ]] && {
-    SERVERS="${syncHostHostname[${syncHostServerRoleIndex[0]}]}"
-    syncSERVER="${syncHost[${syncHostServerRoleIndex[0]}]}"
-    syncSERVER_IP="${syncHostIP[${syncHostServerRoleIndex[0]}]}"
-    syncSERVERv6="${syncHostIPv6[${syncHostServerRoleIndex[0]}]}"
-    for (( i=1; i<${#syncHostServerRoleIndex[@]}; i++))
-    do
-      SERVERS="$SERVERS ${syncHostHostname[${syncHostServerRoleIndex[$i]}]}"
-      syncSERVER="$syncSERVER ${syncHost[${syncHostServerRoleIndex[$i]}]}"
-      syncSERVER_IP="$syncSERVER_IP ${syncHostIP[${syncHostServerRoleIndex[$i]}]}"
-      syncSERVERv6="$syncSERVERv6 ${syncHostIPv6[${syncHostServerRoleIndex[$i]}]}"
+    for i in "${syncHostServerRoleIndex[@]}"; do
+      SERVERS+=" ${syncHostHostname[$i]}"
+      syncSERVER_HOSTNAME+=( "${syncHostHostname[$i]}" )
+      syncSERVER+=( "${syncHost[$i]}" )
+      syncSERVER_IP+=( "${syncHostIP[$i]}" )
+      syncSERVERv6+=( "${syncHostIPv6[$i]}" )
     done
+    SERVERS="${SERVERS:1}"
     export SERVERS syncSERVER syncSERVER_IP syncSERVERv6 syncSERVER_HOSTNAME
     export syncSERVER_IPv6="${syncSERVERv6}"
   }
