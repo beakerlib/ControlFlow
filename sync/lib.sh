@@ -810,10 +810,10 @@ syncLibraryLoaded() {
       syncSERVER+=( "${syncHost[$i]}" )
       syncSERVER_IP+=( "${syncHostIP[$i]}" )
       syncSERVERv6+=( "${syncHostIPv6[$i]}" )
+      syncSERVER_IPv6+=( "${syncHostIPv6[$i]}" )
     done
     SERVERS="${SERVERS:1}"
-    export SERVERS syncSERVER syncSERVER_IP syncSERVERv6 syncSERVER_HOSTNAME
-    export syncSERVER_IPv6="${syncSERVERv6}"
+    export SERVERS syncSERVER syncSERVER_IP syncSERVERv6 syncSERVER_IPv6 syncSERVER_HOSTNAME
   }
   [[ -n "$syncHostClientRoleIndex" ]] && {
     for i in "${syncHostClientRoleIndex[@]}"; do
@@ -822,10 +822,10 @@ syncLibraryLoaded() {
       syncCLIENT+=( "${syncHost[$i]}" )
       syncCLIENT_IP+=( "${syncHostIP[$i]}" )
       syncCLIENTv6+=( "${syncHostIPv6[$i]}" )
+      syncCLIENT_IPv6+=( "${syncHostIPv6[$i]}" )
     done
     CLIENTS="${CLIENTS:1}"
-    export CLIENTS syncCLIENT syncCLIENT_IP syncCLIENTv6 syncCLIENT_HOSTNAME
-    export syncCLIENT_IPv6="${syncCLIENTv6}"
+    export CLIENTS syncCLIENT syncCLIENT_IP syncCLIENTv6 syncCLIENT_IPv6 syncCLIENT_HOSTNAME
   }
 
   # get default GW interface
